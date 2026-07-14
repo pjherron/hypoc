@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-05-03T20:24:43.293Z",
+  "projectRoot": "${PROJECT_OWNER_HOME}",
+  "structure": {
+    "hasPackageJson": true,
+    "hasTsConfig": false,
+    "hasClaudeConfig": true,
+    "hasClaudeFlow": true
+  },
+  "scannedAt": 1777839883293
+}

@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Database files (keep placeholders, ignore live data)
+*.db
+*.db-shm
+*.db-wal
+!hypoc/.local/opencode.db
+!hypoc/.local/opencode.db-shm
+!hypoc/.local/opencode.db-wal
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test output
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Docker volumes
+data/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan

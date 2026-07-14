@@ -1,0 +1,85 @@
+# GitLab CI/CD Pipeline for Project Hypoc-Face
+# Phase 1: Basic validation and security scanning
+
+stages:
+  - validate
+  - security
+  - build
+
+variables:
+  # Disable Auto-DevOps for now (we'll enable it in later phases)
+  AUTO_DEVOPS_ENABLED: "false"
+  # Enable secret detection
+  SECRET_DETECTION_ENABLED: "true"
+  # Skip deployment stages for now
+  SKIP_DEPLOY: "true"
+
+# Basic validation - check if critical files exist
+validate:structure:
+  stage: validate
+  image: alpine:latest
+  script:
+    - echo "Validating project structure..."
+    - test -f docker-compose.yml || exit 1
+    - test -d hypoc-face-core || exit 1
+    - test -f hypoc-face-core/Dockerfile || exit 1
+    - test -f hypoc-face-core/requirements.txt || exit 1
+    - echo "✅ Structure validation passed"
+  only:
+    - branches
+
+# Python syntax validation
+validate:python:
+  stage: validate
+  image: python:3.11-slim
+  script:
+    - echo "Validating Python syntax..."
+    - python -m py_compile hypoc-face-core/app/main.py
+    - python -m py_compile hypoc-face-core/app/core/config.py
+    - python -m py_compile hypoc-face-core/app/models/user.py
+    - python -m py_compile hypoc-face-core/app/models/role.py
+    - echo "✅ Python syntax validation passed"
+  only:
+    - branches
+
+# Docker validation
+validate:docker:
+  stage: validate
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - echo "Validating Dockerfiles..."
+    - docker build --target deps -t test-deps ./hypoc-face-core || exit 1
+    - echo "✅ Docker validation passed"
+  only:
+    - branches
+  allow_failure: true  # Allow failure since we may not have Docker in GitLab runners
+
+# Secret detection
+include:
+  - template: Jobs/Secret-Detection.gitlab-ci.yml
+
+# Override secret detection to allow .env.example files
+secret_detection:
+  variables:
+    SECRET_DETECTION_EXCLUDED_PATHS: "*.example,*.template,*.sample,docs/"
+  allow_failure: true  # Don't block on false positives from example files
+
+# SAST (Static Application Security Testing)
+include:
+  - template: Jobs/SAST.gitlab-ci.yml
+
+sast:
+  allow_failure: true  # Don't block pipeline during development
+
+# Success notification
+pipeline:success:
+  stage: .post
+  image: alpine:latest
+  script:
+    - echo "🎉 Pipeline passed successfully!"
+    - echo "MVP 1 is operational and ready for development"
+  when: on_success
+  only:
+    - feature/hypoc-face

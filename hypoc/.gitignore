@@ -1,0 +1,83 @@
+# Gitignore for OpenCode Enterprise AI Setup
+
+# Node modules (if any local npm packages)
+node_modules/
+.npm/
+.cache/
+
+# OpenCode/Claude build artifacts
+.opencode/plugins/*.js
+.opencode/plugins/*.d.ts
+.opencode/plugins/*.js.map
+
+# Memory databases
+.swarm/
+.claude-flow/data/
+*.db
+*.db-shm
+*.db-wal
+
+# Session files
+.claude/cache/
+.claude/downloads/
+.claude/telemetry/
+
+# Environment variables (never commit secrets!)
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+credentials.json
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+*.log
+logs/
+.claude-flow/logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build outputs
+dist/
+build/
+out/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Examples (keep source, ignore builds)
+examples/*/node_modules/
+examples/*/.next/
+examples/*/build/
+examples/*/dist/
+
+# But DO commit these important files:
+!.opencode/plugins/skill-discovery.ts
+!.opencode/plugins/compile.sh
+!.opencode/opencode.json
+!skills/
+!examples/ml-api/*.md
+!examples/ml-api/*.py
+!examples/ml-api/*.yaml
+!examples/ml-api/*.json
+datagpt/
+MEMORY.md
+
+# [Org] HR Operations - exclude scraped HTML documents
+skills/gtri-hr-operations/resources/documents/

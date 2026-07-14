@@ -1,0 +1,88 @@
+# Gitleaks configuration for Project Hypoc-Face
+# Prevents false positives from example and template files
+
+title = "Project Hypoc-Face - Secret Detection Configuration"
+
+[[rules]]
+description = "Generic API Key"
+id = "generic-api-key"
+regex = '''(?i)(?:key|api|token|secret|password)\s*[:=]\s*['"]?[a-z0-9\-_]{20,}['"]?'''
+tags = ["key", "api"]
+
+# Allowlist for example/template files
+[[rules.allowlist]]
+paths = [
+  '''\.env\.example$''',
+  '''\.env\.template$''',
+  '''\.env\.sample$''',
+  '''example\.env$''',
+  '''template\.env$''',
+  '''/docs/''',
+  '''/examples/'''
+]
+
+[[rules]]
+description = "AWS Access Key"
+id = "aws-access-key"
+regex = '''AKIA[0-9A-Z]{16}'''
+tags = ["key", "aws"]
+
+[[rules.allowlist]]
+paths = [
+  '''\.env\.example$''',
+  '''\.env\.template$''',
+  '''/docs/'''
+]
+comments = [
+  '''example''',
+  '''template''',
+  '''placeholder''',
+  '''CHANGE_ME''',
+  '''REQUIRED''',
+  '''TODO'''
+]
+
+[[rules]]
+description = "OpenAI API Key"
+id = "openai-api-key"
+regex = '''sk-[a-zA-Z0-9]{48}'''
+tags = ["key", "openai"]
+
+[[rules.allowlist]]
+paths = [
+  '''\.env\.example$''',
+  '''/docs/'''
+]
+
+[[rules]]
+description = "Anthropic API Key"
+id = "anthropic-api-key"
+regex = '''sk-ant-[a-zA-Z0-9\-]{95}'''
+tags = ["key", "anthropic"]
+
+[[rules.allowlist]]
+paths = [
+  '''\.env\.example$''',
+  '''/docs/'''
+]
+
+# Global allowlist for documentation and examples
+[allowlist]
+description = "Allow example and documentation files"
+paths = [
+  '''\.md$''',
+  '''\.example$''',
+  '''\.template$''',
+  '''\.sample$''',
+  '''/docs/''',
+  '''/examples/'''
+]
+commits = []
+regexes = [
+  '''CHANGE_ME''',
+  '''CHANGE_THIS''',
+  '''PLACEHOLDER''',
+  '''REQUIRED''',
+  '''TODO''',
+  '''EXAMPLE'''
+]

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "workingDirectory": "${REPO_ROOT}",
+  "plugin": [
+    "superpowers@git+https://github.com/obra/superpowers.git",
+    "ecc-universal",
+    "./hypoc/.opencode/plugins/skill-discovery.js"
+  ],
+  "instructions": [
+    "${REPO_ROOT}/skills/bootstrap/SKILL.md",
+    "${REPO_ROOT}/skills/skill-invoke/SKILL.md",
+    "${REPO_ROOT}/skills/session-recruitment/SKILL.md",
+    "${REPO_ROOT}/skills/skill-recruitment/SKILL.md"
+  ]
+}
