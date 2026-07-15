@@ -42,14 +42,26 @@ def limits(param_size: str, is_cloud: bool):
     out = 32768 if is_cloud else 8192
     return {"context": ctx, "output": out}
 
+def fmt_size(bytes):
+    gb = bytes / 1024 / 1024 / 1024
+    if gb >= 1:
+        return f"{gb:.0f}GB"
+    mb = bytes / 1024 / 1024
+    return f"{mb:.0f}MB"
+
 # Build models dict
 new_models = {}
 for m in models:
     name = m["name"]
-    is_cloud = name.endswith(":cloud")
+    is_cloud = name.endswith(":cloud") or name.endswith("-cloud")
+    size_bytes = m.get("size", 0)
+    if is_cloud:
+        display = f"{name} (cloud)"
+    else:
+        display = f"{name} ({fmt_size(size_bytes)})"
     new_models[name] = {
         "_launch": True,
-        "name": name,
+        "name": display,
         "limit": limits(m["details"].get("parameter_size","70B"), is_cloud)
     }
 
@@ -63,6 +75,6 @@ with open(config_path, "w") as f:
     json.dump(cfg, f, indent=2)
 
 print(f"Synced {len(new_models)} Ollama models to {config_path}")
-for name in sorted(new_models):
-    print(f"  {name}")
+for name, entry in sorted(new_models.items()):
+    print(f"  {entry['name']}")
 PYEOF
