@@ -42,6 +42,13 @@ def limits(param_size: str, is_cloud: bool):
     out = 32768 if is_cloud else 8192
     return {"context": ctx, "output": out}
 
+# Models known to lack tool/function calling support
+NO_TOOLS = {"llama2", "mixtral", "mistral"}
+
+def has_tools(name: str) -> bool:
+    base = name.split(":")[0].split("/")[-1]
+    return base not in NO_TOOLS
+
 def fmt_size(bytes):
     gb = bytes / 1024 / 1024 / 1024
     if gb >= 1:
@@ -55,10 +62,9 @@ for m in models:
     name = m["name"]
     is_cloud = name.endswith(":cloud") or name.endswith("-cloud")
     size_bytes = m.get("size", 0)
-    if is_cloud:
-        display = f"{name} (cloud)"
-    else:
-        display = f"{name} ({fmt_size(size_bytes)})"
+    suffix = "cloud" if is_cloud else fmt_size(size_bytes)
+    tools_flag = "" if has_tools(name) else " ⚠ no tools"
+    display = f"{name} ({suffix}){tools_flag}"
     new_models[name] = {
         "_launch": True,
         "name": display,
