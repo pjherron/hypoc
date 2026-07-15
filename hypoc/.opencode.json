@@ -3,8 +3,7 @@
   "workingDirectory": "${REPO_ROOT}",
   "plugin": [
     "superpowers@git+https://github.com/obra/superpowers.git",
-    "ecc-universal",
-    "./.opencode/plugins/skill-discovery.js"
+    "ecc-universal"
   ],
   "instructions": [
     "${REPO_ROOT}/skills/bootstrap/SKILL.md",
