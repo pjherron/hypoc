@@ -51,14 +51,6 @@ services:
       - "host.docker.internal:host-gateway"
     command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 
-  hypoc-face-ui:
-    build:
-      context: ./hypoc-face/hypoc-face-ui
-    ports:
-      - "3000:80"
-    depends_on:
-      - hypoc-face-core
-      - hypoc-face-router
 
 volumes:
   postgres_data:
