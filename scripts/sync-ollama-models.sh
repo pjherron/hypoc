@@ -43,7 +43,7 @@ def limits(param_size: str, is_cloud: bool):
     return {"context": ctx, "output": out}
 
 # Models known to lack tool/function calling support
-NO_TOOLS = {"llama2", "mixtral", "mistral"}
+NO_TOOLS = {"llama2", "mixtral", "mistral", "deepseek-r1"}
 
 def supports_tools(name: str) -> bool:
     base = name.split(":")[0].split("/")[-1]
