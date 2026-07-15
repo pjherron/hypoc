@@ -1,305 +1,93 @@
-<!-- Configuration variables referenced in this document:
-  AWS_REGION                AWS region for deployment (e.g. us-gov-west-1, us-east-1)  (e.g. us-gov-west-1)
-  PROJECT_DIR               Local project root directory  (e.g. /Users/pherron6/dev/opencode)
--->
+# Hypoc — OpenCode Enterprise AI Platform
 
-# Hypoc - OpenCode Configuration
+"The best way to predict the future is to invent it." — Alan Kay
 
-"The best way to predict the future is to invent it." - __HYPOC_KAY__
-
-This repo is named after __HYPOC_KAY__, an American computer scientist and pioneer of object-oriented programming and graphical window interfaces. While working at Xerox PARC in the 1970s he created Smalltalk, the first object-oriented programming language, the first computing notebooks and tablets, and the first prototypes for an interface that would eventually become known as Windows, a feature adopted by both Microsoft and Apple. He also created Disney animatronics. Kay received the Turing Award in 2003.
+Named after Alan Kay, computer scientist and pioneer of object-oriented programming, graphical window interfaces, Smalltalk, and early notebook/tablet computing at Xerox PARC (Turing Award, 2003).
 
 ---
 
-Shareable OpenCode configuration with skills, agents, and patterns. Foundation for building AI-powered development environments.
+Hypoc is a shareable OpenCode configuration that ships a batteries-included AI development environment: skills, agents, memory, and a router — provider-agnostic and runnable locally via Ollama or against any cloud model.
 
-> **Note:** This is the base Hypoc configuration. For the enterprise multi-tenant platform (Hypoc-Face), see the separate `hypoc-face/` directory which uses Hypoc as a git submodule.
+## Architecture
 
-## Overview
+```
+hypoc/
+├── .opencode/opencode.json   # Workspace config (permissions, model, skills)
+├── skills/                   # Skill library (slash commands, always-loaded patterns)
+├── agents/                   # Agent definitions
+├── scripts/                  # Operational utilities
+│   └── sync-ollama-models.sh # Sync local Ollama models into ~/.config/opencode/opencode.json
+├── hypoc-face/               # Enterprise multi-tenant platform (uses hypoc as submodule)
+│   ├── hypoc-face-core/      # FastAPI backend
+│   └── hypoc-face-router/    # Request router
+└── docker-compose.yml        # Local stack (postgres, core, router)
+```
 
-This repository contains:
-- **14 always-loaded skills** including automatic session/project/skill recruitment
-- **CLAUDE.md** with workspace development workflow and constraints
-- **3 custom skills** created from scratch (aws-infrastructure, kubernetes-patterns, fastapi-patterns)
-- **Context-aware discovery plugin** for automatic skill suggestions
-- **Dated memory system** with timeline tracking
-- **227 skills** including [Org] HR Operations for comprehensive coverage
-- **Bedrock prompt caching enabled** (~90% cost reduction on cached content)
-- **Complete documentation** and examples
+## Prerequisites
 
-## Features
-
-### Infrastructure Skills
-- **AWS**: EC2, ECS Fargate, Lambda, S3, RDS, VPC, IAM, CloudFormation
-- **Kubernetes**: Manifests, Helm, autoscaling, monitoring, security
-- **Docker**: Multi-stage builds, security best practices, optimization
-- **FastAPI**: Async patterns, Pydantic validation, WebSockets, production deployment
-- **Python**: Async programming, type hints, Pythonic idioms
-
-### Automation
-- **Discovery Plugin**: Context-aware skill suggestions based on project type and keywords
-- **Memory System**: Dated timeline with automatic capture of important events
-- **Token Optimization**: Strategic skill loading to maximize context efficiency
-
-### Configuration
-- **Global Skills**: 13 always-loaded patterns (~89K tokens)
-- **Project Skills**: Context-specific additions
-- **Discovery System**: Smart suggestions without context pollution
-- **Cost Optimization**: Bedrock prompt caching enabled (1-hour TTL, ~90% savings)
+- [opencode](https://opencode.ai) 1.18+
+- [Ollama](https://ollama.ai) (for local models)
+- Docker + Docker Compose (for the hypoc-face stack)
+- Python 3.11+ (for hypoc-face-core)
 
 ## Quick Start
 
-### Installation
-
-1. **Clone this repository:**
 ```bash
-git clone https://github.com/pjherron/opencode-enterprise-ai-setup.git
-cd opencode-enterprise-ai-setup
-```
-
-2. **Install dependencies:**
-```bash
-npm install -g ecc-universal
-npm install -g @claude-flow/cli
-```
-
-3. **Link global config:**
-```bash
-# Backup your existing config
-cp ~/.config/opencode/opencode.json ~/.config/opencode/opencode.json.backup
-
-# Use this repo's config
-ln -sf $(pwd)/.config/opencode.json ~/.config/opencode/opencode.json
-```
-
-4. **Compile discovery plugin:**
-```bash
-cd .opencode/plugins
-./compile.sh
-```
-
-5. **Initialize memory:**
-```bash
-npx @claude-flow/cli memory init
-```
-
-### Usage
-
-**Start OpenCode in any project** - infrastructure skills are always available:
-```bash
-cd /your/project
+git clone git@github.com:pjherron/hypoc.git
+cd hypoc
 opencode
 ```
 
-**Use the discovery plugin** - get suggestions based on context:
-```
-You: "I need Docker support"
-Plugin: Suggests docker-patterns
-```
+opencode picks up `.opencode/opencode.json` automatically. No further setup required.
 
-**Capture important work:**
-```bash
-node .opencode/helpers/memory-manager.mjs capture "Your summary"
-node .opencode/helpers/memory-manager.mjs milestone "Major achievement"
-node .opencode/helpers/memory-manager.mjs deployment "Production release"
-```
+### Local Model Setup
 
-**Search your history:**
-```bash
-node .opencode/helpers/memory-manager.mjs search "kubernetes"
-node .opencode/helpers/memory-manager.mjs recent 10
-```
-
-## Repository Structure
-
-```
-opencode-enterprise-ai-setup/
-├── .opencode/
-│   ├── opencode.json                  # Project configuration
-│   ├── plugins/
-│   │   ├── skill-discovery.ts         # Discovery plugin source
-│   │   └── compile.sh                 # Build script
-│   └── helpers/
-│       └── memory-manager.mjs         # Memory capture tool
-│
-├── skills/
-│   ├── aws-infrastructure/            # Custom AWS patterns
-│   ├── kubernetes-patterns/           # Custom K8s patterns
-│   ├── fastapi-patterns/              # Custom FastAPI patterns
-│   └── ... (183 ECC skills)
-│
-├── examples/
-│   └── ml-api/                        # Example deployment
-│
-├── MEMORY.md                          # Session memory with timeline
-└── README.md                          # This file
-```
-
-## Skills Included
-
-### Automatic Recruitment (3 skills - NEW)
-- session-recruitment (automatic past session discovery and loading)
-- project-tracking (mandatory TodoWrite usage for all multi-step work)
-- skill-recruitment (automatic past skill and pattern discovery)
-
-### Core Enterprise (5 skills)
-- coding-standards
-- security-review
-- tdd-workflow
-- eval-harness
-- deep-research
-
-### DevOps & Deployment (3 skills)
-- docker-patterns
-- deployment-patterns
-- terminal-ops
-
-### Backend Development (3 skills)
-- python-patterns
-- fastapi-patterns
-- mcp-server-patterns
-
-### Cloud Infrastructure (2 skills)
-- aws-infrastructure (custom)
-- kubernetes-patterns (custom)
-
-**Total: 14 always-loaded skills**
-
-## Token Budget
-
-```
-200K total
-├─ 89K  Always-loaded skills (45%)
-├─ 80K  Conversation + tool results
-└─ 31K  Available for exploration (16%)
-```
-
-## Configuration
-
-### Global Config (`~/.config/opencode/opencode.json`)
-```json
-{
-  "provider": {
-    "amazon-bedrock": {
-      "prompt_caching": true,
-      "cache_point_ttl": "1h",
-      "options": {
-        "region": "${AWS_REGION}",
-        "baseURL": "https://bedrock-runtime.${AWS_REGION}.amazonaws.com"
-      },
-      "models": {
-        "claude-4.5-gov": {
-          "id": "us-gov.anthropic.claude-sonnet-4-5-20250929-v1:0"
-        }
-      }
-    }
-  },
-  "model": "amazon-bedrock/claude-4.5-gov",
-  "plugin": [
-    "superpowers@git+https://github.com/obra/superpowers.git",
-    "ecc-universal"
-  ],
-  "instructions": [
-    "/opt/homebrew/lib/node_modules/ecc-universal/skills/coding-standards/SKILL.md",
-    "/opt/homebrew/lib/node_modules/ecc-universal/skills/security-review/SKILL.md",
-    // ... 11 more skills
-  ]
-}
-```
-
-### Project Config (`.opencode.json`)
-```json
-{
-  "workingDirectory": "${PROJECT_DIR}",
-  "plugin": [
-    "superpowers@git+https://github.com/obra/superpowers.git",
-    "ecc-universal",
-    "./.opencode/plugins/skill-discovery.js"
-  ],
-  "instructions": [
-    "/opt/homebrew/lib/node_modules/ecc-universal/skills/frontend-patterns/SKILL.md",
-    "/opt/homebrew/lib/node_modules/ecc-universal/skills/backend-patterns/SKILL.md",
-    "/opt/homebrew/lib/node_modules/ecc-universal/skills/api-design/SKILL.md"
-  ]
-}
-```
-
-## Documentation
-
-- **CLAUDE.md** - Workspace development workflow and operational constraints
-- **docs/BEDROCK_CACHING_UPDATE.md** - Prompt caching configuration and benefits
-- **SETUP_COMPLETE.md** - Complete setup documentation
-- **INFRASTRUCTURE_SKILLS_ADDED.md** - Infrastructure skills guide
-- **SESSION_MEMORY_GUIDE.md** - Memory system documentation
-- **CONTEXT_MEMORY_GUIDE.md** - Context-driven memory usage
-- **QUICK_START.md** - Quick reference
-- **FILE_STRUCTURE.md** - Project layout
-
-## Memory System
-
-Capture important events with dates and context:
+Model registration is user config — not part of this repo. After pulling models via Ollama:
 
 ```bash
-# Capture event
-node .opencode/helpers/memory-manager.mjs capture "Summary"
+# Pull a model
+ollama pull llama3.3:70b-instruct-q4_K_M
 
-# Record milestone
-node .opencode/helpers/memory-manager.mjs milestone "Major achievement"
-
-# Search history
-node .opencode/helpers/memory-manager.mjs search "keyword"
-
-# Show recent
-node .opencode/helpers/memory-manager.mjs recent 10
+# Sync all local Ollama models into your opencode global config
+./scripts/sync-ollama-models.sh
 ```
 
-All entries are stored in `MEMORY.md` with timestamps and tags.
+The sync script:
+- Queries the live Ollama API
+- Excludes tool-incompatible models (llama2, mistral, mixtral, deepseek-r1)
+- Shows file sizes in parens next to each model name
+- Writes `~/.config/opencode/opencode.json` provider.ollama.models
 
-## Use Cases
+### Running the hypoc-face Stack
 
-### For Enterprise AI Development
-- Model experiments → Infrastructure → Deployment → Strategy
-- Full-stack: Foundation models, MLOps, cloud infrastructure
-- Always-available patterns for AWS, K8s, Docker, FastAPI
+```bash
+docker compose up -d
+```
 
-### For Infrastructure Work
-- Deploy FastAPI apps to ECS Fargate
-- Set up Kubernetes clusters with autoscaling
-- Configure AWS VPCs, RDS, ElastiCache
-- Containerize applications with Docker
+Services:
+- `postgres` — port 5433
+- `hypoc-face-core` — port 8002
+- `hypoc-face-router` — port 8001
 
-### For Team Standardization
-- Shared skill configuration
-- Consistent patterns across projects
-- Memory system for institutional knowledge
+The stack uses `host.docker.internal` to reach Ollama on the host machine.
 
-## Contributing
+## opencode Configuration
 
-This is a personal configuration repository. If you want to contribute:
+### Workspace (`.opencode/opencode.json`)
 
-1. Fork this repo
-2. Create your feature branch (`git checkout -b feature/amazing`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing`)
-5. Open a Pull Request
+Sets the default model, permissions (allow-all for autonomous operation), and loads skills. Model IDs here should be updated to match whatever models you have registered globally.
 
-## Credits
+### Global (`~/.config/opencode/opencode.json`)
 
-Built on top of:
-- **[Everything Claude Code (ECC)](https://github.com/affaan-m/everything-claude-code)** by @affaan-m
-- **[Superpowers](https://github.com/obra/superpowers)** by @obra
-- **[OpenCode](https://opencode.ai)** by Anomaly
+Managed by the user (or `sync-ollama-models.sh`). Registers provider credentials and model lists. Not committed to this repo — provider-specific and machine-specific.
 
-## License
+## Skills
 
-MIT License - See LICENSE file for details
+Skills live in `skills/` and are available as slash commands in opencode. The workspace config loads a bootstrap set at startup; additional skills are discovered and recruited automatically.
 
-## Author
+## Notes
 
-**your-username** - Enterprise AI Developer
-
-Builds AI systems end-to-end: from foundation model experiments to production infrastructure and business strategy.
-
----
-
-**Status**: Active development | Last updated: 2026-06-19 | OpenCode 1.15.0 | Bedrock Caching Enabled
+- opencode's `opencode web` replaces any separate browser UI — no additional frontend needed
+- The `hypoc-face-ui` package was removed as redundant
+- All Bedrock GovCloud references have been removed; the platform is provider-agnostic
+- pydantic-settings v2: `extra = "ignore"` is set in hypoc-face-core config to avoid ValidationError on unknown env vars
