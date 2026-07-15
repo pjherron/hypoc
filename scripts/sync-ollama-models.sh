@@ -45,7 +45,7 @@ def limits(param_size: str, is_cloud: bool):
 # Models known to lack tool/function calling support
 NO_TOOLS = {"llama2", "mixtral", "mistral"}
 
-def has_tools(name: str) -> bool:
+def supports_tools(name: str) -> bool:
     base = name.split(":")[0].split("/")[-1]
     return base not in NO_TOOLS
 
@@ -56,15 +56,18 @@ def fmt_size(bytes):
     mb = bytes / 1024 / 1024
     return f"{mb:.0f}MB"
 
-# Build models dict
+# Build models dict — skip models that don't support tool/function calling
 new_models = {}
+skipped = []
 for m in models:
     name = m["name"]
+    if not supports_tools(name):
+        skipped.append(name)
+        continue
     is_cloud = name.endswith(":cloud") or name.endswith("-cloud")
     size_bytes = m.get("size", 0)
     suffix = "cloud" if is_cloud else fmt_size(size_bytes)
-    tools_flag = "" if has_tools(name) else " ⚠ no tools"
-    display = f"{name} ({suffix}){tools_flag}"
+    display = f"{name} ({suffix})"
     new_models[name] = {
         "_launch": True,
         "name": display,
@@ -83,4 +86,6 @@ with open(config_path, "w") as f:
 print(f"Synced {len(new_models)} Ollama models to {config_path}")
 for name, entry in sorted(new_models.items()):
     print(f"  {entry['name']}")
+if skipped:
+    print(f"Skipped {len(skipped)} tool-incompatible model(s): {', '.join(skipped)}")
 PYEOF
