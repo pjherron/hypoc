@@ -462,7 +462,11 @@
     }
   },
   "permission": {
-    "mcp_*": "ask"
+    "mcp_*": "allow",
+    "bash": "allow",
+    "write": "allow",
+    "edit": "allow",
+    "read": "allow"
   },
   "provider": {
     "ollama": {
