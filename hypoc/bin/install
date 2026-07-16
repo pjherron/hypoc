@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Install the hypoc command for this user
+# Safe to run multiple times; idempotent.
+
+set -euo pipefail
+
+HYPOC_BIN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/hypoc"
+HYPOC_LINK="$HOME/.local/bin/hypoc"
+
+# Create ~/.local/bin if needed
+mkdir -p "$HOME/.local/bin"
+
+# Symlink hypoc into ~/.local/bin
+ln -sf "$HYPOC_BIN" "$HYPOC_LINK"
+
+# Add ~/.local/bin to PATH if not already there
+SHELL_RC=""
+if [ -f "$HOME/.zshrc" ]; then
+  SHELL_RC="$HOME/.zshrc"
+elif [ -f "$HOME/.bashrc" ]; then
+  SHELL_RC="$HOME/.bashrc"
+elif [ -f "$HOME/.bash_profile" ]; then
+  SHELL_RC="$HOME/.bash_profile"
+fi
+
+if [ -n "$SHELL_RC" ] && ! grep -q 'export PATH.*\.local/bin' "$SHELL_RC"; then
+  echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$SHELL_RC"
+  echo "Added ~/.local/bin to PATH in $SHELL_RC"
+fi
+
+echo "✓ hypoc installed to $HYPOC_LINK"
+echo "✓ Run 'hypoc' from anywhere"
+echo ""
+echo "If PATH hasn't updated in this shell, either:"
+echo "  • Restart your terminal"
+echo "  • Or run: source $SHELL_RC"
