@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Install the hypoc command for this user
+# Works on macOS, WSL, and Linux
 # Safe to run multiple times; idempotent.
 
 set -euo pipefail
@@ -13,24 +14,29 @@ mkdir -p "$HOME/.local/bin"
 # Symlink hypoc into ~/.local/bin
 ln -sf "$HYPOC_BIN" "$HYPOC_LINK"
 
-# Add ~/.local/bin to PATH if not already there
-SHELL_RC=""
-if [ -f "$HOME/.zshrc" ]; then
-  SHELL_RC="$HOME/.zshrc"
-elif [ -f "$HOME/.bashrc" ]; then
-  SHELL_RC="$HOME/.bashrc"
-elif [ -f "$HOME/.bash_profile" ]; then
-  SHELL_RC="$HOME/.bash_profile"
+# Detect shell(s) to update
+SHELLS=()
+[ -f "$HOME/.zshrc" ] && SHELLS+=("$HOME/.zshrc")
+[ -f "$HOME/.bashrc" ] && SHELLS+=("$HOME/.bashrc")
+[ -f "$HOME/.bash_profile" ] && SHELLS+=("$HOME/.bash_profile")
+
+if [ ${#SHELLS[@]} -eq 0 ]; then
+  # Fallback: add to zshrc if nothing else exists
+  SHELLS=("$HOME/.zshrc")
 fi
 
-if [ -n "$SHELL_RC" ] && ! grep -q 'export PATH.*\.local/bin' "$SHELL_RC"; then
-  echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$SHELL_RC"
-  echo "Added ~/.local/bin to PATH in $SHELL_RC"
-fi
+# Add ~/.local/bin to PATH in each shell config (if not already there)
+for rc in "${SHELLS[@]}"; do
+  if ! grep -q 'export PATH.*\.local/bin' "$rc" 2>/dev/null; then
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rc"
+    echo "Added ~/.local/bin to PATH in $(basename "$rc")"
+  fi
+done
 
+echo ""
 echo "✓ hypoc installed to $HYPOC_LINK"
 echo "✓ Run 'hypoc' from anywhere"
 echo ""
-echo "If PATH hasn't updated in this shell, either:"
-echo "  • Restart your terminal"
-echo "  • Or run: source $SHELL_RC"
+echo "To activate in this shell:"
+echo "  source $HOME/.zshrc   # zsh"
+echo "  source $HOME/.bashrc  # bash"
