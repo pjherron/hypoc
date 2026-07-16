@@ -34,11 +34,23 @@ hypoc/
 
 ```bash
 git clone git@github.com:pjherron/hypoc.git
-cd hypoc
-opencode
+cd hypoc/hypoc
+./scripts/install-global.sh    # wire hypoc into your global opencode config
 ```
 
-opencode picks up `.opencode/opencode.json` automatically. No further setup required.
+Then use opencode **from any project directory** — hypoc's skill recruitment follows you
+everywhere:
+
+```bash
+cd /any/project
+opencode          # or: opencode web
+```
+
+Describe what you want in plain English; the bootstrap skill recruits the right skills
+from the hypoc library on demand. Only the 4 recruitment skills (~5K tokens) are
+always-loaded — pattern skills load per task, keeping local-model context lean.
+
+Re-run `install-global.sh` if you move the hypoc checkout.
 
 ### Local Model Setup
 
