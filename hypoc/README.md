@@ -24,7 +24,6 @@ hypoc/
 ├── AGENTS.md                 # Agent library documentation
 ├── CONTRIBUTING.md           # Skill/agent contribution guidelines
 ```
-```
 
 ## Prerequisites
 
