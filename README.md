@@ -11,12 +11,7 @@ platform/
 │   ├── agents/             73 agent definitions (see hypoc/AGENTS.md)
 │   ├── scripts/            sync-ollama-models.sh, container lifecycle, monitoring, security
 │   └── .opencode/          Workspace config, instructions, skill-discovery plugin
-├── hypoc-face/             Backend services (browser UI = opencode web, built in)
-│   ├── hypoc-face-core     FastAPI backend (PostgreSQL, Redis, auth) — implemented
-│   ├── hypoc-face-router   Custom 4-tier model router — FastAPI skeleton implemented
-│   ├── hypoc-face-rag      RAG service — stub (Phase 2)
-│   ├── hypoc-face-agent    Agent coordination — stub (Phase 4)
-│   └── hypoc-face-workspace  Workspace isolation — stub (Phase 4)
+├── hypoc-face/             DEPRECATED — opencode web is built in; not being developed
 ├── enterprise-toolkit/     One-command installer and packaging (own skills/, independent)
 ├── docs/adr/               Architectural decision records
 ├── VISION.md               Full platform vision
@@ -57,6 +52,6 @@ platform/
 ## Status
 
 First-pass engineering **shipped 2026-07-16**: provider-agnostic (Bedrock removed), local-first
-via Ollama, self-contained hypoc package, redundant UI removed in favor of `opencode web`.
-Second pass will overlay the SAS migration domain (pharma QC). See [TODO.md](TODO.md) for
-remaining work.
+via Ollama, self-contained hypoc package, hypoc-face deprecated in favor of built-in
+`opencode web`. Cloud model tiers and the SAS migration domain overlay (pharma QC) are
+separate projects. See [TODO.md](TODO.md).

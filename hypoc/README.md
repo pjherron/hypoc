@@ -23,18 +23,13 @@ hypoc/
 │   └── sync-ollama-models.sh # Sync local Ollama models into ~/.config/opencode/opencode.json
 ├── AGENTS.md                 # Agent library documentation
 ├── CONTRIBUTING.md           # Skill/agent contribution guidelines
-├── hypoc-face/               # Enterprise multi-tenant platform (uses hypoc as submodule)
-│   ├── hypoc-face-core/      # FastAPI backend
-│   └── hypoc-face-router/    # Request router
-└── docker-compose.yml        # Local stack (postgres, core, router)
+└── hypoc-face/               # DEPRECATED — not developed; opencode web is built in
 ```
 
 ## Prerequisites
 
 - [opencode](https://opencode.ai) 1.18+
 - [Ollama](https://ollama.ai) (for local models)
-- Docker + Docker Compose (for the hypoc-face stack)
-- Python 3.11+ (for hypoc-face-core)
 
 ## Quick Start
 
@@ -64,19 +59,6 @@ The sync script:
 - Shows file sizes in parens next to each model name
 - Writes `~/.config/opencode/opencode.json` provider.ollama.models
 
-### Running the hypoc-face Stack
-
-```bash
-docker compose up -d
-```
-
-Services:
-- `postgres` — port 5433
-- `hypoc-face-core` — port 8002
-- `hypoc-face-router` — port 8001
-
-The stack uses `host.docker.internal` to reach Ollama on the host machine.
-
 ## opencode Configuration
 
 ### Workspace (`.opencode/opencode.json`)
@@ -94,6 +76,5 @@ Skills live in `skills/` and are available as slash commands in opencode. The wo
 ## Notes
 
 - opencode's `opencode web` replaces any separate browser UI — no additional frontend needed
-- The `hypoc-face-ui` package was removed as redundant
+- `hypoc-face/` is deprecated and not being developed; it remains in-tree for reference only
 - All Bedrock GovCloud references have been removed; the platform is provider-agnostic
-- pydantic-settings v2: `extra = "ignore"` is set in hypoc-face-core config to avoid ValidationError on unknown env vars
