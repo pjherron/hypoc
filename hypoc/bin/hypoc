@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# hypoc — OpenCode with the Hypoc skill library
+# Usage: hypoc [args]
+# Runs opencode with the Hypoc workspace configuration and skill library.
+
+set -euo pipefail
+
+# Find the hypoc repo root (where this script lives, two levels up)
+HYPOC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Run opencode from the hypoc workspace directory
+# This loads .opencode/opencode.json which points to skills/ and agents/
+cd "$HYPOC_DIR"
+exec opencode "$@"
