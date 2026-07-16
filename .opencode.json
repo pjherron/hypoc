@@ -7,9 +7,9 @@
     "./hypoc/.opencode/plugins/skill-discovery.js"
   ],
   "instructions": [
-    "${REPO_ROOT}/skills/bootstrap/SKILL.md",
-    "${REPO_ROOT}/skills/skill-invoke/SKILL.md",
-    "${REPO_ROOT}/skills/session-recruitment/SKILL.md",
-    "${REPO_ROOT}/skills/skill-recruitment/SKILL.md"
+    "${REPO_ROOT}/hypoc/skills/bootstrap/SKILL.md",
+    "${REPO_ROOT}/hypoc/skills/skill-invoke/SKILL.md",
+    "${REPO_ROOT}/hypoc/skills/session-recruitment/SKILL.md",
+    "${REPO_ROOT}/hypoc/skills/skill-recruitment/SKILL.md"
   ]
 }
