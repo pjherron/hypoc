@@ -56,3 +56,7 @@ data/
 *.tfplan
 hnsw.index
 .swarm/
+
+# Local archives and config backups
+archive-*.tar.gz
+*.backup-before-*
