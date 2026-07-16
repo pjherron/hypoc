@@ -10,13 +10,19 @@ Hypoc is a shareable OpenCode configuration that ships a batteries-included AI d
 
 ## Architecture
 
+Hypoc is **self-contained**: clone it and everything the workspace config references — skills, agents, instructions — is in the repo. The only external dependencies are two public plugins (`ecc-universal` from npm, `superpowers` from GitHub) that opencode fetches automatically at startup.
+
 ```
 hypoc/
-├── .opencode/opencode.json   # Workspace config (permissions, model, skills)
-├── skills/                   # Skill library (slash commands, always-loaded patterns)
-├── agents/                   # Agent definitions
+├── .opencode/
+│   ├── opencode.json         # Workspace config (permissions, model, skills)
+│   └── instructions/         # Consolidated operating instructions
+├── skills/                   # 69 skills (61 library + 8 vendored ECC skills)
+├── agents/                   # 73 agent definitions (see AGENTS.md)
 ├── scripts/                  # Operational utilities
 │   └── sync-ollama-models.sh # Sync local Ollama models into ~/.config/opencode/opencode.json
+├── AGENTS.md                 # Agent library documentation
+├── CONTRIBUTING.md           # Skill/agent contribution guidelines
 ├── hypoc-face/               # Enterprise multi-tenant platform (uses hypoc as submodule)
 │   ├── hypoc-face-core/      # FastAPI backend
 │   └── hypoc-face-router/    # Request router

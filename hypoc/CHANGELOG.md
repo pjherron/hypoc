@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Self-contained packaging**: `skills/` (61) and `agents/` (73) moved into the repo — a git clone now includes everything the workspace config references
+- **Vendored ECC skills**: 7 skills (coding-standards, frontend-patterns, frontend-slides, backend-patterns, e2e-testing, strategic-compact, eval-harness) imported from the public everything-claude-code repo
+- **project-tracking skill**: recreated (was referenced by config but lost)
+- **AGENTS.md**: agent library documentation
+- **CONTRIBUTING.md**: contribution guidelines
+- **scripts/sync-ollama-models.sh**: now ships inside the repo
+
+### Fixed
+- All 18 `instructions` paths in `.opencode/opencode.json` now resolve (11 were previously broken/missing)
+- `instructions/INSTRUCTIONS.md` path corrected to `.opencode/instructions/INSTRUCTIONS.md`
+
 ## [2.0.0] - 2026-07-15
 
 ### Removed

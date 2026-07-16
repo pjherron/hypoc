@@ -7,7 +7,7 @@
     "CLAUDE.md",
     "AGENTS.md",
     "CONTRIBUTING.md",
-    "instructions/INSTRUCTIONS.md",
+    ".opencode/instructions/INSTRUCTIONS.md",
     "skills/session-recruitment/SKILL.md",
     "skills/project-tracking/SKILL.md",
     "skills/skill-recruitment/SKILL.md",
