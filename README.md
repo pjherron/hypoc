@@ -6,22 +6,28 @@ A re-engineered AI developer stack for small teams. Cloneable, day-one productiv
 
 ```
 platform/
-├── hypoc/                  OpenCode CLI environment
-│   ├── scripts/            Container lifecycle, monitoring, security tooling
-│   └── .opencode/          ECC plugin + skill-discovery, bootstrap on startup
-├── hypoc-face/             Browser UI and backend services
+├── hypoc/                  Canonical self-contained package — clone-and-go
+│   ├── skills/             69 curated skills (61 library + 7 vendored ECC + project-tracking)
+│   ├── agents/             73 agent definitions (see hypoc/AGENTS.md)
+│   ├── scripts/            sync-ollama-models.sh, container lifecycle, monitoring, security
+│   └── .opencode/          Workspace config, instructions, skill-discovery plugin
+├── hypoc-face/             Backend services (browser UI = opencode web, built in)
 │   ├── hypoc-face-core     FastAPI backend (PostgreSQL, Redis, auth) — implemented
 │   ├── hypoc-face-router   Custom 4-tier model router — FastAPI skeleton implemented
 │   ├── hypoc-face-rag      RAG service — stub (Phase 2)
 │   ├── hypoc-face-agent    Agent coordination — stub (Phase 4)
 │   └── hypoc-face-workspace  Workspace isolation — stub (Phase 4)
-├── enterprise-toolkit/     One-command installer and packaging
-├── skills/                 ~60 curated skills (see below)
-├── agents/                 Focused agent library
+├── enterprise-toolkit/     One-command installer and packaging (own skills/, independent)
 ├── docs/adr/               Architectural decision records
 ├── VISION.md               Full platform vision
-└── CONTEXT.md              Domain glossary
+├── CONTEXT.md              Domain glossary
+└── TODO.md                 Remaining work
 ```
+
+> Skills and agents live **inside `hypoc/`** — the package is self-contained. A git clone
+> includes everything the opencode config references; the only external dependencies are
+> two public plugins (`ecc-universal` via npm, `superpowers` via GitHub) that opencode
+> fetches automatically.
 
 ## Core Principles
 
@@ -50,4 +56,7 @@ platform/
 
 ## Status
 
-First-pass engineering. Second pass will overlay the SAS migration domain (pharma QC).
+First-pass engineering **shipped 2026-07-16**: provider-agnostic (Bedrock removed), local-first
+via Ollama, self-contained hypoc package, redundant UI removed in favor of `opencode web`.
+Second pass will overlay the SAS migration domain (pharma QC). See [TODO.md](TODO.md) for
+remaining work.

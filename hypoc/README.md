@@ -17,7 +17,7 @@ hypoc/
 ├── .opencode/
 │   ├── opencode.json         # Workspace config (permissions, model, skills)
 │   └── instructions/         # Consolidated operating instructions
-├── skills/                   # 69 skills (61 library + 8 vendored ECC skills)
+├── skills/                   # 69 skills (61 library + 7 vendored ECC + project-tracking)
 ├── agents/                   # 73 agent definitions (see AGENTS.md)
 ├── scripts/                  # Operational utilities
 │   └── sync-ollama-models.sh # Sync local Ollama models into ~/.config/opencode/opencode.json

@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All 18 `instructions` paths in `.opencode/opencode.json` now resolve (11 were previously broken/missing)
 - `instructions/INSTRUCTIONS.md` path corrected to `.opencode/instructions/INSTRUCTIONS.md`
 
+### Removed
+- Repo-root `skills/` and `agents/` duplicates deleted — `hypoc/` is the canonical package; root `.opencode.json` repointed to `hypoc/skills/`
+
 ## [2.0.0] - 2026-07-15
 
 ### Removed
