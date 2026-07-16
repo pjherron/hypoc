@@ -14,15 +14,17 @@ mkdir -p "$HOME/.local/bin"
 # Symlink hypoc into ~/.local/bin
 ln -sf "$HYPOC_BIN" "$HYPOC_LINK"
 
-# Detect shell(s) to update
+# Detect shell(s) to update — check in order of preference
+# macOS uses .bash_profile for login shells, .bashrc for non-login
+# Linux uses .bashrc primarily; zsh uses .zshrc
 SHELLS=()
-[ -f "$HOME/.zshrc" ] && SHELLS+=("$HOME/.zshrc")
-[ -f "$HOME/.bashrc" ] && SHELLS+=("$HOME/.bashrc")
 [ -f "$HOME/.bash_profile" ] && SHELLS+=("$HOME/.bash_profile")
+[ -f "$HOME/.bashrc" ] && SHELLS+=("$HOME/.bashrc")
+[ -f "$HOME/.zshrc" ] && SHELLS+=("$HOME/.zshrc")
 
 if [ ${#SHELLS[@]} -eq 0 ]; then
-  # Fallback: add to zshrc if nothing else exists
-  SHELLS=("$HOME/.zshrc")
+  # Fallback
+  SHELLS=("$HOME/.bash_profile")
 fi
 
 # Add ~/.local/bin to PATH in each shell config (if not already there)
