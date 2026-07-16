@@ -11,7 +11,6 @@ platform/
 │   ├── agents/             73 agent definitions (see hypoc/AGENTS.md)
 │   ├── scripts/            sync-ollama-models.sh, container lifecycle, monitoring, security
 │   └── .opencode/          Workspace config, instructions, skill-discovery plugin
-├── hypoc-face/             DEPRECATED — opencode web is built in; not being developed
 ├── enterprise-toolkit/     One-command installer and packaging (own skills/, independent)
 ├── docs/adr/               Architectural decision records
 ├── VISION.md               Full platform vision

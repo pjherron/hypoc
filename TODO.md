@@ -5,7 +5,6 @@ Updated 2026-07-16.
 ## Remaining in this repo
 
 - [ ] **enterprise-toolkit refresh** — package.json still references `ecc-universal >=1.10.0` peer dep and placeholder author/org fields
-- [ ] **Decide hypoc-face disposition** — development stopped (opencode web is built in); code remains in-tree. Archive and remove, or leave as reference.
 
 ## Out of scope (decided)
 
@@ -21,3 +20,4 @@ Updated 2026-07-16.
 - [x] Ollama model registration + sync script (tool-incompatible models excluded, sizes shown)
 - [x] docker-compose and pydantic-settings fixes
 - [x] History scrubbed of AI attribution trailers
+- [x] hypoc-face archived (archive-20260716-hypoc-face.tar.gz, local) and removed

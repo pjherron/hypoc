@@ -23,7 +23,7 @@ hypoc/
 │   └── sync-ollama-models.sh # Sync local Ollama models into ~/.config/opencode/opencode.json
 ├── AGENTS.md                 # Agent library documentation
 ├── CONTRIBUTING.md           # Skill/agent contribution guidelines
-└── hypoc-face/               # DEPRECATED — not developed; opencode web is built in
+```
 ```
 
 ## Prerequisites
@@ -76,5 +76,5 @@ Skills live in `skills/` and are available as slash commands in opencode. The wo
 ## Notes
 
 - opencode's `opencode web` replaces any separate browser UI — no additional frontend needed
-- `hypoc-face/` is deprecated and not being developed; it remains in-tree for reference only
+- `hypoc-face/` was removed 2026-07-16 (archived); opencode web is built in
 - All Bedrock GovCloud references have been removed; the platform is provider-agnostic
