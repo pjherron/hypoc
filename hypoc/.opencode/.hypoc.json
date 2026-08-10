@@ -12,7 +12,8 @@
   ],
   "plugin": [
     "superpowers@git+https://github.com/obra/superpowers.git",
-    "ecc-universal"
+    "ecc-universal",
+    "/Users/pjherron17/Documents/Claude/Projects/AI toolkit/hypoc/hypoc/plugins/opencode-model-router"
   ],
   "model_router": {
     "enabled": true,

@@ -106,9 +106,11 @@ You stop repeating yourself. The agent learns.
 - Strategic compaction for context management
 
 **Model routing**
-- Custom 2-tier Ollama routing with automatic failover (ADR 0002, no LiteLLM)
-- `tiers.json` tier/cost definitions; `/tokens` command for per-session token/cost visibility
-- `install-global.sh` — one clone makes skills/agents available from any project
+- Dynamic per-task model routing via vendored `opencode-model-router` plugin (ADR 0002)
+- Task taxonomy routes each task to fast/medium/heavy tier; cross-provider fallback on failure
+- Presets for all providers: anthropic, openai, openrouter, google, github-copilot, ollama, hybrid
+- One-command switching: `/preset <provider>` / `/budget <mode>` / `/tiers` / `/annotate-plan`
+- Config versioned in `plugins/opencode-model-router/tiers.json`
 
 **Infrastructure**
 - AgentDB database design (384-dim HNSW ready)
@@ -132,20 +134,20 @@ You stop repeating yourself. The agent learns.
 ### Non-memory roadmap (reference)
 
 - IVAN platform phases 1–5 — auth + `hypoc-face-core`, RAG service, cost router, multi-tenant (RabbitMQ), monitoring (Prometheus/K8s/Terraform) — all backlog, none running
-- Tier 3 model routing — remote provider fallback, not wired
 
 ---
 
 ## Architecture
 
-Hypoc is **self-contained**: clone it and everything the workspace config references — skills, agents, instructions — is in the repo. The only external dependencies are two public plugins (`ecc-universal` from npm, `superpowers` from GitHub) that opencode fetches automatically at startup.
+Hypoc is **self-contained**: clone it and everything the workspace config references — skills, agents, instructions — is in the repo. The only external dependencies are two public plugins (`ecc-universal` from npm, `superpowers` from GitHub) that opencode fetches automatically at startup, plus the vendored `opencode-model-router` (GPL-3.0) at `plugins/`.
 
 ```
 hypoc/
 ├── .opencode/
 │   ├── .hypoc.json           # Workspace config (permissions, model, skills, tiers)
-│   ├── tiers.json            # Model routing tiers (ADR 0002)
 │   └── instructions/         # Consolidated operating instructions
+├── plugins/
+│   └── opencode-model-router # Vendored model router (tiers.json versioned here)
 ├── skills/                   # 70 skills, recruited on demand
 ├── agents/                   # 73 agent definitions (see AGENTS.md)
 ├── scripts/                  # Operational utilities
@@ -197,7 +199,7 @@ The sync script queries the live Ollama API, excludes tool-incompatible models, 
 
 ## Current Status
 
-- **Working:** core memory capture, git integration, keyword search, 70 skills, 73 agents, 2-tier router
+- **Working:** core memory capture, git integration, keyword search, 70 skills, 73 agents, model router (vendored plugin)
 - **In progress:** session-start/end hooks, semantic search + embedding pipeline, git→AgentDB indexing
 - **Planned:** memory intelligence layer, hybrid search, team features
 - **Honest note:** AgentDB is designed but not yet queryable; "227 skills" and "14 always-loaded" are aspirational — the real numbers are 70 and 4.

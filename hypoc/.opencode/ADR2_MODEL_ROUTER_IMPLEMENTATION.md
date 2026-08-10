@@ -1,15 +1,50 @@
-# ADR2 Implementation — Custom Model Router
+# ADR2 Implementation — Model Router
 
-**Status**: Configured (awaiting testing)  
-**Date**: 2026-07-20
+**Status**: Adopted (vendored `opencode-model-router` @ 1.3.0)  
+**Date**: 2026-07-20 (initial) / 2026-08-10 (adoption)
 
 ## Overview
 
-Implemented 2-tier model routing with automatic failover and token/cost tracking per ADR 0002.
+Model routing per ADR 0002 is implemented by adopting the third-party opencode plugin `opencode-model-router` (marco-jardim, GPL-3.0). It provides dynamic per-task routing (classifies each task against a taxonomy, delegates to a fast/medium/heavy tier, falls back across providers on failure). Vendored into `plugins/opencode-model-router/` so its `tiers.json` config is versioned with the repo rather than trapped inside node_modules.
 
-## Tier Configuration
+> Note: earlier work in this file documented a custom 2-tier Ollama router with token/cost tracking. That was superseded by the vendored plugin, which already implements task→tier routing, multi-provider fallback, and cost-aware delegation.
 
-### Tier 1: Fast (Default)
+## Adopted Configuration
+
+The vendored plugin reads its config from `plugins/opencode-model-router/tiers.json` (plugin root; runtime state lives in `~/.config/opencode/opencode-model-router.state.json`).
+
+### Presets — all providers
+
+The stock `tiers.json` ships with `anthropic`, `openai`, `github-copilot`, `google`, and `hybrid` presets. Hypoc adds two:
+
+- **`openrouter`** — `gpt-oss:20b` (fast) / `gpt-oss:120b-cloud` (medium) / `qwen3-coder:480b-cloud` (heavy), all cloud-hosted
+- **`ollama`** — `llama3.1:8b` (fast) / `phi4:latest` (medium) / `llama3.3:70b-instruct-q4_K_M` (heavy), all local/free
+
+Each preset maps three tiers (fast/medium/heavy) to a model, with cost ratio, step budget, and use-cases. Fallback chains for `openrouter` and `ollama` were added to the global fallback map.
+
+### Routing Behavior
+
+- **Tier classification** — `taskPatterns` map keywords to tiers (grep/read → `@fast`; impl/refactor/test → `@medium`; arch/debug/security → `@heavy`)
+- **Cost-aware delegation** — cost ratios injected into the orchestrator prompt; cheapest adequate tier wins
+- **Multi-phase split** — composite tasks split: explore `@fast` → execute `@medium`
+- **Cross-provider fallback** — if a provider fails, the chain tries the next preset
+
+### Usage Commands
+
+```
+/preset <name>        # switch provider tiers (anthropic|openai|github-copilot|google|hybrid|openrouter|ollama)
+/budget <mode>        # normal|budget|quality|deep
+/tiers                # show active tiers/models/rules
+/annotate-plan [path] # tag plan steps with [tier:X]
+```
+
+## Earlier Custom Design (Superseded)
+
+> Historical. The original 2-tier fallback chain and token tracking below were config-only, never executed by any runtime code, and have been replaced by the vendored plugin.
+
+### Tier Configuration (historical)
+
+#### Tier 1: Fast (Default)
 - **Model**: `llama3.1:8b-instruct` (~4.7GB)
 - **Provider**: Ollama (local)
 - **Cost**: $0.00
@@ -17,7 +52,7 @@ Implemented 2-tier model routing with automatic failover and token/cost tracking
 - **Max Context**: 8,000 tokens
 - **Use cases**: Quick tasks, simple code, lightweight analysis
 
-### Tier 2: Capable (Fallback)
+#### Tier 2: Capable (Fallback)
 - **Model**: `phi4:latest` (~9GB)
 - **Provider**: Ollama (local)
 - **Cost**: $0.00
@@ -25,7 +60,7 @@ Implemented 2-tier model routing with automatic failover and token/cost tracking
 - **Max Context**: 16,000 tokens
 - **Use cases**: Complex reasoning, multi-step tasks, code generation, refactoring
 
-## Fallback Chain
+## Fallback Chain (historical)
 
 ```
 Request → Tier 1 (llama3.1:8b-instruct)
@@ -35,7 +70,7 @@ Request → Tier 1 (llama3.1:8b-instruct)
           Tier 3 TBD (remote provider)
 ```
 
-## Agent Tier Assignments
+## Agent Tier Assignments (historical)
 
 ### Heavy-Lifting Agents (Tier 2: Capable)
 - `build` — primary coding agent
@@ -105,18 +140,18 @@ opencode "Quick refactor"
 
 ## Files Modified
 
-- `.opencode/.hypoc.json` — Added model_router config, updated agent tier assignments
-- `.opencode/tiers.json` — New file defining tier configuration
-- `.opencode/helpers/token-cost-tracker.sh` — New token tracking helper
+- `.opencode/.hypoc.json` — Added `plugins/opencode-model-router` to the `plugin` array
+- `plugins/opencode-model-router/tiers.json` — Added `openrouter` + `ollama` presets and fallback chains
+- `.opencode/tiers.json` — Original custom tier definitions (kept as reference)
 
 ## Next Steps
 
-1. ✅ Configure 2-tier local routing
-2. ⏳ Test normal operation (Tier 1 & 2)
-3. ⏳ Test failover (kill Ollama)
-4. ⏳ Add Tier 3 (remote provider) once identified
-5. ⏳ Verify token counts surface in UI
-6. ⏳ Verify cost tracking (even if $0)
+1. ✅ Adopt `opencode-model-router` (vendored into `plugins/`)
+2. ✅ Add openrouter + ollama presets (all providers covered)
+3. ✅ Register in `.hypoc.json` plugin array
+4. ⏳ Verify plugin loads on restart (`/tiers` responds)
+5. ⏳ Test `/preset` switching between providers
+6. ⏳ Test fallback (kill a provider, confirm auto-switch)
 
 ## Related ADRs
 
