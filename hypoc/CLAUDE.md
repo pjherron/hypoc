@@ -48,4 +48,4 @@ Located in `scripts/`:
 
 ## Configuration
 
-`.opencode.json` loads four skills at startup (bootstrap, skill-invoke, session-recruitment, skill-recruitment) and uses `${REPO_ROOT}` as `workingDirectory` so the superpowers plugin discovers the shared skills/ and agents/ library.
+`.opencode/.hypoc.json` loads four skills at startup (bootstrap, skill-invoke, session-recruitment, skill-recruitment) and uses `${REPO_ROOT}` as `workingDirectory` so the superpowers plugin discovers the shared skills/ and agents/ library.

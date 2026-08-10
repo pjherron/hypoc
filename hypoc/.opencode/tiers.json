@@ -1,0 +1,85 @@
+{
+  "tiers": [
+    {
+      "name": "fast",
+      "description": "Fast inference, lightweight tasks",
+      "models": [
+        {
+          "provider": "ollama",
+          "model": "llama3.1:8b",
+          "cost_per_1m_tokens": 0,
+          "latency_ms": 100,
+          "max_context": 8000,
+          "capabilities": ["tools", "function_calling"]
+        }
+      ],
+      "task_patterns": ["simple", "quick", "lightweight"]
+    },
+    {
+      "name": "capable",
+      "description": "More capable model for complex tasks",
+      "models": [
+        {
+          "provider": "ollama",
+          "model": "phi4:latest",
+          "cost_per_1m_tokens": 0,
+          "latency_ms": 200,
+          "max_context": 16000,
+          "capabilities": ["tools", "function_calling", "reasoning"]
+        }
+      ],
+      "task_patterns": ["complex", "reasoning", "multi-step", "code"]
+    },
+    {
+      "name": "cloud_general",
+      "description": "Cloud-hosted general-purpose model (free tier)",
+      "models": [
+        {
+          "provider": "openrouter",
+          "model": "gpt-oss:120b-cloud",
+          "cost_per_1m_tokens": 0,
+          "latency_ms": 500,
+          "max_context": 131072,
+          "capabilities": ["tools", "function_calling", "reasoning", "agentic"]
+        }
+      ],
+      "task_patterns": ["expert", "agentic", "reasoning", "when_ollama_down"]
+    },
+    {
+      "name": "cloud_coding",
+      "description": "Cloud-hosted coding specialist (free tier, 20 req/min)",
+      "models": [
+        {
+          "provider": "openrouter",
+          "model": "qwen3-coder:480b-cloud",
+          "cost_per_1m_tokens": 0,
+          "latency_ms": 600,
+          "max_context": 1000000,
+          "capabilities": ["tools", "function_calling", "code_generation", "code_analysis"]
+        }
+      ],
+      "task_patterns": ["coding", "codebase_analysis", "refactor", "when_ollama_down"]
+    }
+  ],
+  "fallback_chain": [
+    "fast",
+    "capable",
+    "cloud_general",
+    "cloud_coding"
+  ],
+  "cost_tracking": {
+    "enabled": true,
+    "surface_tokens": true,
+    "surface_costs": true,
+    "per_session": true
+  },
+  "routing_rules": {
+    "default": "fast",
+    "complex": "capable",
+    "reasoning": "capable",
+    "code_generation": "cloud_coding",
+    "code_refactor": "cloud_coding",
+    "agentic": "cloud_general",
+    "expert_analysis": "cloud_general"
+  }
+}

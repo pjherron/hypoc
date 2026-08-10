@@ -15,7 +15,8 @@ Hypoc is **self-contained**: clone it and everything the workspace config refere
 ```
 hypoc/
 ├── .opencode/
-│   ├── opencode.json         # Workspace config (permissions, model, skills)
+│   ├── .hypoc.json           # Workspace config (permissions, model, skills, tiers)
+│   ├── tiers.json            # Model routing tiers (ADR 0002)
 │   └── instructions/         # Consolidated operating instructions
 ├── skills/                   # 69 skills (61 library + 7 vendored ECC + project-tracking)
 ├── agents/                   # 73 agent definitions (see AGENTS.md)
@@ -72,9 +73,9 @@ The sync script:
 
 ## opencode Configuration
 
-### Workspace (`.opencode/opencode.json`)
+### Workspace (`.opencode/.hypoc.json`)
 
-Sets the default model, permissions (allow-all for autonomous operation), and loads skills. Model IDs here should be updated to match whatever models you have registered globally.
+Sets the default model, permissions (allow-all for autonomous operation), loads skills, and configures model routing tiers (ADR 0002). Model IDs here should be updated to match whatever models you have registered globally.
 
 ### Global (`~/.config/opencode/opencode.json`)
 
