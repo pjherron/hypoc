@@ -107,9 +107,9 @@ You stop repeating yourself. The agent learns.
 
 **Model routing**
 - Dynamic per-task model routing via vendored `opencode-model-router` plugin (ADR 0002)
-- Task taxonomy routes each task to fast/medium/heavy tier; cross-provider fallback on failure
-- Presets for all providers: anthropic, openai, openrouter, google, github-copilot, ollama, hybrid
-- One-command switching: `/preset <provider>` / `/budget <mode>` / `/tiers` / `/annotate-plan`
+- Task taxonomy routes each task to fast/medium/heavy tier; cross-preset fallback on provider failure
+- Presets for every provider stack: anthropic, openai, openrouter, google, github-copilot, ollama, hybrid
+- One-command switching: `/preset <preset>` / `/budget <mode>` / `/tiers` / `/annotate-plan`
 - Config versioned in `plugins/opencode-model-router/tiers.json`
 
 **Infrastructure**

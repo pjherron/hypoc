@@ -140,9 +140,13 @@ opencode "Quick refactor"
 
 ## Files Modified
 
-- `.opencode/.hypoc.json` — Added `plugins/opencode-model-router` to the `plugin` array
-- `plugins/opencode-model-router/tiers.json` — Added `openrouter` + `ollama` presets and fallback chains
-- `.opencode/tiers.json` — Original custom tier definitions (kept as reference)
+- `.opencode/.hypoc.json` — Added `plugins/opencode-model-router` to the `plugin` array; removed the `tier-status` command and repointed `model_router.tiers_config` at the vendored plugin
+- `plugins/opencode-model-router/tiers.json` — Added `openrouter` + `ollama` presets and fallback chains; this file is now the **single authoritative** tier configuration
+- `.opencode/tiers.json` — Removed (superseded by the vendored plugin's taxonomy)
+
+## Terminology (see CONTEXT.md)
+
+**preset** — a named binding of fast/medium/heavy → specific models (the only thing `/preset` switches). **tier** — one of `fast`/`medium`/`heavy`, the task-cost bucket. **provider** — the actual model service (Anthropic, OpenAI, Ollama…); a preset may span several. **routing** — task→tier assignment via `taskPatterns`. **fallback** — on provider failure, re-dispatch via another preset's chain.
 
 ## Next Steps
 

@@ -17,7 +17,7 @@
   ],
   "model_router": {
     "enabled": true,
-    "tiers_config": ".opencode/tiers.json",
+    "tiers_config": "plugins/opencode-model-router/tiers.json",
     "token_tracking": true,
     "cost_tracking": true,
     "fallback_enabled": true,
@@ -465,10 +465,6 @@
     "tokens": {
       "description": "Display token usage and costs for current session",
       "template": "bash .opencode/helpers/token-cost-tracker.sh"
-    },
-    "tier-status": {
-      "description": "Show model tier configuration and routing status",
-      "template": "cat .opencode/tiers.json | jq '.tiers[] | {name, description, models: [.models[].model]}'"
     }
   },
   "permission": {
