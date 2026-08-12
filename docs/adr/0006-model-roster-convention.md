@@ -47,8 +47,8 @@ Hypoc defines a **roster convention**; concrete rosters live downstream.
 
 ## Consequences
 
-- bmxoc's `models/roster.json` (PR bmxoc#1) is the reference instantiation;
-  its policy values are BMX's, its shape is this ADR's.
+- Concrete rosters live in downstream distribution repos (typically private).
+  Their policy values are the org's own; their shape is this ADR's.
 - The escalation-advisory is platform policy today; emitting it from
   `hypoc-face-router` is implementation work that lands when the rebuilt
   router is upstreamed. When it lands, its placeholder tier models

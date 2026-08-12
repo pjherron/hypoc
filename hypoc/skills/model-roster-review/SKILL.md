@@ -54,7 +54,8 @@ per slot, capability ceilings, jurisdiction axes, monitor/excluded lists).
 
 Machine-readable roster (JSON) keyed by router tier, plus a short narrative
 doc: decisions locked with rationale, the slot table, dispositions, sources
-with fetch dates. See bmxoc `models/roster.json` for the reference instance.
+with fetch dates. Concrete instances live in downstream (private) repos; the
+required shape is defined by ADR 0006.
 
 ## Rules
 
