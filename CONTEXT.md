@@ -3,6 +3,9 @@
 ## Distribution
 The product boundary of hypoc: a distribution layered on top of vanilla opencode. The user installs opencode separately; hypoc adds the package (workspace config, skills, agents, plugins) and the `hypoc` launcher as the canonical entry point. Decided 2026-08-12 as today's boundary; a standalone product that bundles opencode itself remains a possible future direction.
 
+## Memory Model
+The memory module's working metaphor is the **prefrontal cortex**, not the hippocampus: working recall of *what was decided, why, and when*. (The hippocampus claim is Magic Context / CortexKit's marketing; we do not use it.) Temporal context is a first-class part of the model — every recalled decision carries its time stamp, and the recall surface shows it.
+
 
 ## Operational Fidelity
 The acceptance criterion for a migrated program. The migrated system must do the same job in production — reports are correct, QC checkpoints produce trustworthy outputs. Does **not** mean bit-for-bit numerical parity with SAS output (SAS and Python handle data differently and exact parity is not required).

@@ -12,8 +12,9 @@ export function formatRecallBlock(results, limit) {
   const lines = results.map((result) => {
     const artifact = result.artifact_path ?? "(no artifact)";
     const session = result.source_session ?? "(no source-session)";
+    const date = result.date ?? "(no date)";
     const title = result.title ?? "";
-    return `- ${artifact} | source-session: ${session} | ${title}`;
+    return `- ${artifact} | source-session: ${session} | date: ${date} | ${title}`;
   });
   const body =
     lines.length === 0

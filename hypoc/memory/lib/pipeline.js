@@ -137,6 +137,7 @@ export async function indexDecision(config, decision, artifactPath, { scheme } =
     artifactPath: toRepoPath(artifactPath),
     title: decision.title,
     sourceSession: decision.source_session,
+    date: decision.date,
     text,
     vectors,
   });
@@ -155,6 +156,7 @@ export async function indexArtifactFile(config, artifactPath) {
     artifactPath: toRepoPath(artifactPath),
     title: artifact.title,
     sourceSession: artifact.source_session,
+    date: artifact.date,
     text,
     vectors,
   });
@@ -263,6 +265,7 @@ export async function reindexCommitted(config, { recalibrate = false, scheme } =
       artifactPath: rel,
       title: artifact.title,
       sourceSession: artifact.source_session,
+      date: artifact.date,
       text,
       vectors,
     });

@@ -1,6 +1,16 @@
-# Enterprise AI Developer Platform
+# Hypoc: an opencode distribution
 
-A re-engineered AI developer stack for small teams. Cloneable, day-one productive.
+Vanilla opencode, plus a skill library, a model router, and a prefrontal cortex.
+
+Hypoc layers on top of a stock opencode install: 69 skills and 73 agents recruited from plain English, cost-aware routing across local Ollama models, and memory modeled on the prefrontal cortex — decisions from past sessions are distilled, time-stamped, committed to git, and searched automatically the moment they're relevant. It is search — but search that fires on its own, before you know to ask. opencode remembers your sessions; hypoc keeps what you decided, why, and when, on tap. Everything runs locally. You invoke it as `hypoc` — same binary, hypoc surface.
+
+## Core Principles
+
+1. **No skill names required** — describe what you want. The platform recruits the right skill and asks before running it.
+2. **Cheapest capable model** — four-tier routing, cost visible in the UI.
+3. **Everything remembered** — PostgreSQL (profiles), Git (corpus), SQLite (local state).
+4. **Suggestion and execution modes** — skills propose, agents act. Teams graduate naturally.
+5. **Shadow profiles** — the platform learns each developer's patterns over time.
 
 ## Structure
 
@@ -23,13 +33,9 @@ platform/
 > two public plugins (`ecc-universal` via npm, `superpowers` via GitHub) that opencode
 > fetches automatically.
 
-## Core Principles
+## Getting started
 
-1. **No skill names required** — describe what you want. The platform recruits the right skill and asks before running it.
-2. **Cheapest capable model** — four-tier routing, cost visible in the UI.
-3. **Everything remembered** — PostgreSQL (profiles), Git (corpus), SQLite (local state).
-4. **Suggestion and execution modes** — skills propose, agents act. Teams graduate naturally.
-5. **Shadow profiles** — the platform learns each developer's patterns over time.
+See [QUICKSTART.md](QUICKSTART.md) — clone, `./bin/install`, sync models, run `hypoc`.
 
 ## Skills Library
 
@@ -47,10 +53,12 @@ platform/
 - [0002 — Custom model router, no LiteLLM](docs/adr/0002-model-router-no-litellm.md)
 - [0003 — Multi-layer knowledge architecture](docs/adr/0003-knowledge-layers.md)
 - [0004 — Suggestion and execution modes](docs/adr/0004-suggestion-and-execution-modes.md)
+- [0005 — Distribution boundary: overlay on vanilla opencode](docs/adr/0005-distribution-boundary.md)
 
 ## Status
 
-First-pass engineering **shipped 2026-07-16**: provider-agnostic (Bedrock removed), local-first
-via Ollama, self-contained hypoc package, hypoc-face deprecated in favor of built-in
-`opencode web`. Cloud model tiers and the SAS migration domain overlay (pharma QC) are
-separate projects. See [TODO.md](TODO.md).
+- **2026-07-16** — first pass shipped: provider-agnostic (Bedrock removed), local-first via Ollama, self-contained hypoc package; hypoc-face deprecated in favor of built-in `opencode web`.
+- **2026-08-11** — memory module shipped (ADR 0006): distill → committed decision artifact → embed → screen → recall, with auto warm-start and a periodic consolidation sweep.
+- **2026-08-12** — review hardening pass (30 tests green); distribution boundary settled (ADR 0005); quickstart onboarding documented.
+
+Cloud model tiers and the SAS migration domain overlay (pharma QC) are separate projects. See [TODO.md](TODO.md).

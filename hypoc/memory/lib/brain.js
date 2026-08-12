@@ -102,7 +102,7 @@ export async function clearCollection(config) {
   }
 }
 
-// artifact: { artifactPath, title, sourceSession, text, vectors: { scheme: float } }
+// artifact: { artifactPath, title, sourceSession, date, text, vectors: { scheme: float } }
 // Only the schemes provided are upserted (per-scheme reindexing stays
 // decoupled thanks to optional named vectors).
 export async function indexArtifact(config, artifact) {
@@ -124,6 +124,7 @@ export async function indexArtifact(config, artifact) {
       artifact_path: artifact.artifactPath,
       source_session: artifact.sourceSession,
       title: artifact.title,
+      date: artifact.date ?? null,
       text: artifact.text,
     },
   };
@@ -171,6 +172,7 @@ export async function search(config, queryVectors, limit, scheme) {
     artifact_path: item.payload?.artifact_path ?? null,
     source_session: item.payload?.source_session ?? null,
     title: item.payload?.title ?? null,
+    date: item.payload?.date ?? null,
     score: item.score,
   }));
 }

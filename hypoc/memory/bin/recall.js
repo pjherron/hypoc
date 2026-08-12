@@ -54,6 +54,7 @@ console.log(`# Recalled ${results.length} result(s) for "${query}"`);
 for (const result of results) {
   const path = result.artifact_path ?? "(no artifact)";
   const session = result.source_session ?? "(no source-session)";
+  const date = result.date ?? "(no date)";
   const title = result.title ?? "";
-  console.log(`- ${result.score.toFixed(4)} | ${path} | source-session: ${session} | ${title}`);
+  console.log(`- ${result.score.toFixed(4)} | ${path} | source-session: ${session} | date: ${date} | ${title}`);
 }
