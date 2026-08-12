@@ -94,6 +94,7 @@ for (const row of batch) {
     console.log(
       `INDEXED ${row.id} -> ${path.relative(path.join(__dirname, "..", ".."), existingArtifact)} (existing artifact)`,
     );
+    saveState(statePath, state);
     continue;
   }
   const record = sessionRecord(db, row.id);
