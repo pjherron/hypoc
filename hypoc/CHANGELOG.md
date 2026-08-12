@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Memory module** (`hypoc/memory/`): mnemonic centerline implemented — distill → committed decision artifact (`source-session` link) → embed → screen → index → recall (ADR 0006)
+  - `bin/sweep.js`: periodic consolidation over real opencode session history, state-tracked, distill-on-consolidate backstop, no double-distillation
+  - `bin/recall.js` + `bin/distill-session.js`: `/recall` and `/distill` commands
+  - `bin/warmstart.js` + `memory/plugin/`: auto warm-start on the first user message (chat.message + system.transform hooks)
+  - `bin/reindex.js --recalibrate`: per-corpus energy-concentration screening masks; scheme-append breadth (content + lexical named vectors, ≤8-bit)
+  - ADR 0006 documents the module architecture
 - **Self-contained packaging**: `skills/` (61) and `agents/` (73) moved into the repo — a git clone now includes everything the workspace config references
 - **Vendored ECC skills**: 7 skills (coding-standards, frontend-patterns, frontend-slides, backend-patterns, e2e-testing, strategic-compact, eval-harness) imported from the public everything-claude-code repo
 - **project-tracking skill**: recreated (was referenced by config but lost)
@@ -18,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - All 18 `instructions` paths in `.opencode/opencode.json` now resolve (11 were previously broken/missing)
 - `instructions/INSTRUCTIONS.md` path corrected to `.opencode/instructions/INSTRUCTIONS.md`
+- **Sweep state persistence**: the existing-artifact backstop now persists sweep state, so confirmed-existing sessions aren't re-candidates on reruns
 
 ### Removed
 - Repo-root `skills/` and `agents/` duplicates deleted — `hypoc/` is the canonical package; root `.opencode.json` repointed to `hypoc/skills/`
