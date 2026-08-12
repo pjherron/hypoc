@@ -2,11 +2,47 @@
 # hypoc — OpenCode with the Hypoc skill library
 # Usage: hypoc [args]
 # Runs opencode with the Hypoc workspace configuration and skill library.
+# Ensures the local services the memory module needs (Ollama, Qdrant) are
+# running first — best-effort: if they can't be started, hypoc still launches
+# and memory recall simply degrades until they're available.
 
 set -euo pipefail
 
 # Find the hypoc repo root (where this script lives, two levels up)
 HYPOC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+wait_ready() {
+  local url="$1" name="$2"
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    curl -sf --max-time 2 "$url" >/dev/null 2>&1 && return 0
+    sleep 0.5
+  done
+  echo "[hypoc] warning: $name did not become ready ($url); memory recall will be unavailable until it is." >&2
+  return 0
+}
+
+# Ollama: embedder + distill model runtime.
+if ! curl -sf --max-time 2 http://localhost:11434/api/tags >/dev/null 2>&1; then
+  echo "[hypoc] starting ollama..." >&2
+  if [ "$(uname -s)" = "Darwin" ] && [ -d "/Applications/Ollama.app" ]; then
+    open -a Ollama >/dev/null 2>&1 || true
+  elif command -v ollama >/dev/null 2>&1; then
+    nohup ollama serve >/dev/null 2>&1 &
+  fi
+  wait_ready http://localhost:11434/api/tags ollama
+fi
+
+# Qdrant: the memory brain store. Prefer the repo-local binary if present.
+if ! curl -sf --max-time 2 http://localhost:6333/collections >/dev/null 2>&1; then
+  QDRANT_RUN="$HYPOC_DIR/.swarm/qdrant/run-qdrant.sh"
+  echo "[hypoc] starting qdrant..." >&2
+  if [ -f "$QDRANT_RUN" ]; then
+    nohup bash "$QDRANT_RUN" >>"$HYPOC_DIR/.swarm/qdrant/qdrant.log" 2>&1 &
+  elif command -v qdrant >/dev/null 2>&1; then
+    nohup qdrant >/dev/null 2>&1 &
+  fi
+  wait_ready http://localhost:6333/collections qdrant
+fi
 
 # Run opencode from the hypoc workspace directory
 # This loads .opencode/opencode.json which points to skills/ and agents/

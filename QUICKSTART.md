@@ -13,6 +13,9 @@ Get hypoc running on top of your existing opencode install. ~5 minutes.
 - [Qdrant](https://qdrant.tech) on `localhost:6333` — only needed for the memory module
   (warm-start recall). The rest of hypoc works without it.
 
+You don't need to start these by hand: the `hypoc` launcher starts Ollama and Qdrant if
+they're not already running, and warns if it can't.
+
 ## 1. Clone
 
 ```bash
