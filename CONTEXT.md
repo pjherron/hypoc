@@ -1,5 +1,9 @@
 # Domain Glossary
 
+## Distribution
+The product boundary of hypoc: a distribution layered on top of vanilla opencode. The user installs opencode separately; hypoc adds the package (workspace config, skills, agents, plugins) and the `hypoc` launcher as the canonical entry point. Decided 2026-08-12 as today's boundary; a standalone product that bundles opencode itself remains a possible future direction.
+
+
 ## Operational Fidelity
 The acceptance criterion for a migrated program. The migrated system must do the same job in production — reports are correct, QC checkpoints produce trustworthy outputs. Does **not** mean bit-for-bit numerical parity with SAS output (SAS and Python handle data differently and exact parity is not required).
 
@@ -32,11 +36,11 @@ Teams transition from suggestion → execution as trust grows. Both modes must c
 Users must never need to know a skill's name to benefit from it. The system observes intent from natural language and recruits relevant skills automatically. Before invoking, it notifies the user with a consent prompt offering four choices: **accept** / **review skill** / **revise skill** / **decline**. Explicit slash commands are always available for power users but are never the required entry point. This is the bootstrapping principle — the first interaction must work with zero prior knowledge of the skill library.
 
 ## UX Surface
-Three delivery surfaces, all supported:
-- **CLI** (`hypoc`) — OpenCode terminal environment, primary for developer-native users.
-- **Browser UI** (`hypoc-face`) — web-based interface for the same capabilities.
+Delivery surfaces for the distribution:
+- **CLI** (`hypoc`) — the canonical entry point. Wraps opencode with the hypoc workspace configuration; primary for developer-native users.
+- **Browser UI** (`opencode web`) — built into opencode; `hypoc-face` was deprecated in 2.0.0.
 - **Plugin** — IDE or tool plugin for those who prefer to stay in their editor.
-`enterprise-toolkit` is the packaging layer that bundles all three for a new team to install as a unit.
+`enterprise-toolkit` is the packaging layer that bundles surfaces for a new team to install as a unit.
 
 ## Knowledge Repository
 Multi-layer persistent knowledge — no single store owns everything:
