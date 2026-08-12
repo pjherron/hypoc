@@ -28,6 +28,7 @@
     "skill-invoke":                 { "origin": "local",         "modified": false, "notes": "Platform-native: consent wrapper for all skill invocations" },
     "shadow-profile":               { "origin": "local",         "modified": false, "notes": "Platform-native: per-user skill profile stored in PostgreSQL" },
     "sas-migration":                { "origin": "local",         "modified": false, "notes": "Platform-native: SAS->Python/Java migration stub; second-pass overlay pending" },
+    "model-roster-review":          { "origin": "local",         "modified": false, "notes": "Platform-native: roster review method per ADR 0006; downstreams hold concrete rosters" },
     "agent-introspection-debugging":{ "origin": "ecc-universal", "modified": false },
     "agentdb-advanced":             { "origin": "ecc-universal", "modified": false },
     "agentdb-learning":             { "origin": "ecc-universal", "modified": false },
