@@ -1,44 +1,117 @@
 #!/usr/bin/env bash
-# Install the hypoc command for this user
-# Works on macOS, WSL, and Linux
-# Safe to run multiple times; idempotent.
+# Install hypoc for this user: the `hypoc` command, its runtime services
+# (Ollama, Qdrant), and the models the workspace config needs.
+# Works on macOS and Linux. Safe to run multiple times; idempotent.
 
 set -euo pipefail
 
-HYPOC_BIN="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/hypoc"
+HYPOC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+HYPOC_BIN="$HYPOC_DIR/bin/hypoc"
 HYPOC_LINK="$HOME/.local/bin/hypoc"
+QDRANT_DIR="$HYPOC_DIR/.swarm/qdrant"
 
-# Create ~/.local/bin if needed
+# Models the workspace config actually references:
+#   llama3.1:8b      default + small model (.hypoc.json)
+#   phi4:latest      build agent + memory distillation
+#   nomic-embed-text memory embeddings
+REQUIRED_MODELS=("llama3.1:8b" "phi4:latest" "nomic-embed-text")
+
+say() { echo "[hypoc install] $*"; }
+
+# --- 1. hypoc command on PATH -------------------------------------------------
+
 mkdir -p "$HOME/.local/bin"
-
-# Symlink hypoc into ~/.local/bin
 ln -sf "$HYPOC_BIN" "$HYPOC_LINK"
 
-# Detect shell(s) to update — check in order of preference
-# macOS uses .bash_profile for login shells, .bashrc for non-login
-# Linux uses .bashrc primarily; zsh uses .zshrc
 SHELLS=()
 [ -f "$HOME/.bash_profile" ] && SHELLS+=("$HOME/.bash_profile")
 [ -f "$HOME/.bashrc" ] && SHELLS+=("$HOME/.bashrc")
 [ -f "$HOME/.zshrc" ] && SHELLS+=("$HOME/.zshrc")
-
 if [ ${#SHELLS[@]} -eq 0 ]; then
-  # Fallback
   SHELLS=("$HOME/.bash_profile")
 fi
-
-# Add ~/.local/bin to PATH in each shell config (if not already there)
 for rc in "${SHELLS[@]}"; do
   if ! grep -q 'export PATH.*\.local/bin' "$rc" 2>/dev/null; then
     echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rc"
-    echo "Added ~/.local/bin to PATH in $(basename "$rc")"
+    say "added ~/.local/bin to PATH in $(basename "$rc")"
+  fi
+done
+say "hypoc -> $HYPOC_LINK"
+
+# --- 2. Ollama ----------------------------------------------------------------
+
+if command -v ollama >/dev/null 2>&1 || [ -d "/Applications/Ollama.app" ]; then
+  say "ollama: already installed"
+else
+  say "ollama: installing..."
+  if [ "$(uname -s)" = "Darwin" ]; then
+    if command -v brew >/dev/null 2>&1; then
+      brew install --cask ollama
+    else
+      say "ERROR: Homebrew not found. Install Ollama from https://ollama.com and re-run."
+      exit 1
+    fi
+  else
+    curl -fsSL https://ollama.com/install.sh | sh
+  fi
+fi
+
+# Ensure Ollama is serving so model pulls work.
+if ! curl -sf --max-time 2 http://localhost:11434/api/tags >/dev/null 2>&1; then
+  if [ "$(uname -s)" = "Darwin" ] && [ -d "/Applications/Ollama.app" ]; then
+    open -a Ollama >/dev/null 2>&1 || true
+  else
+    nohup ollama serve >/dev/null 2>&1 &
+  fi
+  for _ in $(seq 1 20); do
+    curl -sf --max-time 2 http://localhost:11434/api/tags >/dev/null 2>&1 && break
+    sleep 0.5
+  done
+fi
+
+# --- 3. Required models ---------------------------------------------------------
+
+for model in "${REQUIRED_MODELS[@]}"; do
+  # ollama lists untagged models with an implicit ":latest" suffix.
+  if ollama list 2>/dev/null | awk '{print $1}' | grep -qxE "$model|$model:latest"; then
+    say "model $model: present"
+  else
+    say "model $model: pulling (this can take a while)..."
+    ollama pull "$model"
   fi
 done
 
-echo ""
-echo "✓ hypoc installed to $HYPOC_LINK"
-echo "✓ Run 'hypoc' from anywhere"
-echo ""
-echo "To activate in this shell:"
-echo "  source $HOME/.zshrc   # zsh"
-echo "  source $HOME/.bashrc  # bash"
+# --- 4. Qdrant (repo-local binary) ----------------------------------------------
+
+mkdir -p "$QDRANT_DIR"
+if [ -x "$QDRANT_DIR/qdrant" ] || command -v qdrant >/dev/null 2>&1; then
+  say "qdrant: already installed"
+else
+  say "qdrant: downloading..."
+  case "$(uname -s)-$(uname -m)" in
+    Darwin-arm64) asset="qdrant-aarch64-apple-darwin.tar.gz" ;;
+    Darwin-x86_64) asset="qdrant-x86_64-apple-darwin.tar.gz" ;;
+    Linux-x86_64) asset="qdrant-x86_64-unknown-linux-gnu.tar.gz" ;;
+    Linux-aarch64) asset="qdrant-aarch64-unknown-linux-musl.tar.gz" ;;
+    *) say "ERROR: unsupported platform $(uname -s)-$(uname -m) for qdrant auto-install"; exit 1 ;;
+  esac
+  tmp="$(mktemp -d)"
+  curl -fsSL -o "$tmp/qdrant.tar.gz" "https://github.com/qdrant/qdrant/releases/latest/download/$asset"
+  tar -xzf "$tmp/qdrant.tar.gz" -C "$QDRANT_DIR"
+  chmod +x "$QDRANT_DIR/qdrant"
+  rm -rf "$tmp"
+  say "qdrant: installed to $QDRANT_DIR/qdrant"
+fi
+
+# The launcher's start script for the repo-local qdrant.
+cat > "$QDRANT_DIR/run-qdrant.sh" <<'EOF'
+#!/bin/bash
+cd "$(dirname "$0")"
+export QDRANT__STORAGE__STORAGE_PATH="./storage"
+exec ./qdrant --disable-telemetry
+EOF
+chmod +x "$QDRANT_DIR/run-qdrant.sh"
+
+# --- 5. Done --------------------------------------------------------------------
+
+say "done. Open a new shell (or source your rc) and run: hypoc"
