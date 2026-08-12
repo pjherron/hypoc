@@ -1,8 +1,8 @@
-# Hypoc: an opencode distribution
+# Hypoc: coding with a prefrontal cortex
 
-Vanilla opencode, plus a skill library, a model router, and a prefrontal cortex.
+Vanilla opencode, plus a skill library, a model router, and dynamic transparent memory use.
 
-Hypoc layers on top of a stock opencode install: 69 skills and 73 agents recruited from plain English, cost-aware routing across local Ollama models, and memory modeled on the prefrontal cortex — decisions from past sessions are distilled, time-stamped, committed to git, and searched automatically the moment they're relevant. It is search — but search that fires on its own, before you know to ask. opencode remembers your sessions; hypoc keeps what you decided, why, and when, on tap. Everything runs locally. You invoke it as `hypoc` — same binary, hypoc surface.
+Hypoc layers on top of a stock opencode install: a curated collection of skills and agents, cost-aware routing across local Ollama models, and memory modeled on the prefrontal cortex: decisions from past sessions are distilled, time-stamped, committed to git, and searched automatically the moment they're relevant. It is search, but search that fires associationally on its own, before you know to ask. opencode remembers your sessions; hypoc keeps what you decided, why, and when, and puts it on tap. Everything runs locally. You invoke it as `hypoc` instead of `opencode.`
 
 ## Core Principles
 
