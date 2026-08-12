@@ -1,0 +1,29 @@
+{
+  "session": {
+    "id": "ses_jun_deploy_0002",
+    "title": "Blue-green deploys to Kubernetes",
+    "time_created": "2026-06-09T10:00:00Z",
+    "time_updated": "2026-06-09T10:45:00Z",
+    "directory": "/Users/pjherron17/dev/example-service"
+  },
+  "messages": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "type": "text",
+          "text": "How should we roll the web service out to production? Rolling updates, canary, or blue-green?"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "parts": [
+        {
+          "type": "text",
+          "text": "For production releases the team decided to ship blue-green deploys to the Kubernetes cluster. Rationale: zero-downtime cutovers and instant rollback by flipping traffic back to the previous color. Alternatives considered: rolling updates and canary deploys."
+        }
+      ]
+    }
+  ]
+}

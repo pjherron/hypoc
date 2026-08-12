@@ -1,0 +1,29 @@
+{
+  "session": {
+    "id": "ses_aug_price_0005",
+    "title": "Usage-based pricing with a free tier",
+    "time_created": "2026-08-05T16:00:00Z",
+    "time_updated": "2026-08-05T16:40:00Z",
+    "directory": "/Users/pjherron17/dev/example-service"
+  },
+  "messages": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "type": "text",
+          "text": "How should we price the product? Flat subscription, per-seat, or usage-based?"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "parts": [
+        {
+          "type": "text",
+          "text": "For pricing the team decided to ship usage-based pricing with a free tier of one thousand tokens per month. Rationale: cost tracks value delivered and a free tier lowers onboarding friction. Alternatives considered: a flat monthly subscription and per-seat pricing."
+        }
+      ]
+    }
+  ]
+}

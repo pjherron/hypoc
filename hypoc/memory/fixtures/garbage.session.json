@@ -1,0 +1,29 @@
+{
+  "session": {
+    "id": "ses_garbage_0007",
+    "title": "session with no decision",
+    "time_created": "2026-08-10T02:00:00Z",
+    "time_updated": "2026-08-10T02:02:00Z",
+    "directory": "/Users/pjherron17/dev/example-service"
+  },
+  "messages": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "type": "text",
+          "text": "qzx plork vamut 88413 bewsd nertle fib 0x9f blarg wux murgle tample"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "parts": [
+        {
+          "type": "text",
+          "text": "krand tufle gwipx 4478 snarf borbulo triskle 0x3c zepf wundu plig"
+        }
+      ]
+    }
+  ]
+}

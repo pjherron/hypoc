@@ -1,0 +1,29 @@
+{
+  "session": {
+    "id": "ses_may_auth_0001",
+    "title": "User authentication with JWT session tokens",
+    "time_created": "2026-05-14T18:30:00Z",
+    "time_updated": "2026-05-14T19:15:00Z",
+    "directory": "/Users/pjherron17/dev/example-service"
+  },
+  "messages": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "type": "text",
+          "text": "We need to pick how users authenticate to the API. Options: long-lived opaque tokens, JWT access tokens, or server sessions with refresh tokens."
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "parts": [
+        {
+          "type": "text",
+          "text": "For user sessions the team decided to ship JWT access tokens with a sliding refresh-token flow. Rationale: stateless verification for the API, short-lived access tokens expiring in thirty minutes, refresh rotation on every use, and revocation at refresh time. Alternatives considered: opaque session tokens and long-lived JWTs without refresh."
+        }
+      ]
+    }
+  ]
+}

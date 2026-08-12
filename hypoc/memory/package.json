@@ -1,0 +1,23 @@
+{
+  "name": "hypoc-memory",
+  "version": "0.1.0",
+  "description": "Mnemonic centerline for hypoc core: distill -> committed decision artifact -> embed -> recall",
+  "type": "module",
+  "bin": {
+    "hypoc-distill": "bin/distill.js",
+    "hypoc-consolidate": "bin/consolidate.js",
+    "hypoc-sweep": "bin/sweep.js",
+    "hypoc-distill-session": "bin/distill-session.js",
+    "hypoc-recall": "bin/recall.js",
+    "hypoc-warmstart": "bin/warmstart.js",
+    "hypoc-reindex": "bin/reindex.js",
+    "hypoc-reset": "bin/reset.js"
+  },
+  "scripts": {
+    "test": "bun test",
+    "seed:session-db": "bun scripts/seed-session-db.js"
+  },
+  "dependencies": {
+    "yaml": "^2.8.1"
+  }
+}

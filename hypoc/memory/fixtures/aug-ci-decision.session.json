@@ -1,0 +1,29 @@
+{
+  "session": {
+    "id": "ses_aug_ci_0006",
+    "title": "GitHub Actions matrix CI",
+    "time_created": "2026-08-08T11:00:00Z",
+    "time_updated": "2026-08-08T11:30:00Z",
+    "directory": "/Users/pjherron17/dev/example-service"
+  },
+  "messages": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "type": "text",
+          "text": "How should continuous integration run across the supported runtime versions?"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "parts": [
+        {
+          "type": "text",
+          "text": "For continuous integration the team decided to ship a GitHub Actions matrix across the supported runtime versions. Rationale: parallel coverage of every supported version without duplicating workflow files. Alternatives considered: a single combined job and a self-hosted runner."
+        }
+      ]
+    }
+  ]
+}

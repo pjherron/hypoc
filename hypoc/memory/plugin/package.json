@@ -1,0 +1,7 @@
+{
+  "name": "hypoc-memory-warmstart",
+  "version": "0.1.0",
+  "description": "Auto warm-start plugin for the hypoc memory brain: recall fires on the first user message and injects top-n distilled decisions into context, unsummoned.",
+  "type": "module",
+  "main": "index.js"
+}

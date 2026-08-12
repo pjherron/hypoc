@@ -1,0 +1,5 @@
+# Runtime state — never commit
+.sweep-state.json
+.sweep-test-state.json
+.sweep-test-dryrun-state.json
+.screen-mask.json

@@ -1,0 +1,78 @@
+# Mnemonic centerline for hypoc core. Single source of truth for the brain.
+
+brain:
+  qdrant_url: "http://localhost:6333"
+  collection: "hypoc_memory"
+  # Miller register: default recall count, hard ceiling. Default toward the
+  # low end (people do well with 2, 3, 5); 9 is the cognitive ceiling.
+  n_recall: 5
+  n_recall_max: 9
+  # Scheme-append breadth: one named vector per scheme, each <=8-bit per
+  # dimension, full-precision copy dropped at storage. Schemes are appended
+  # alongside one another as optional named vectors, so adding a scheme never
+  # rebuilds unrelated points. Screening (below) then prunes each scheme to its
+  # information-bearing core as a post-inference pass.
+  vectors:
+    - name: "content"
+      description: "Semantic embedding of the artifact (stock embedder output)"
+      source: "embedder"
+      size: 768
+      distance: "Cosine"
+      # <=8-bit per dimension; turbo4 (4-bit TurboQuant) quantizes in-flight.
+      datatype: "turbo4"
+      on_disk: true
+      screen: true
+    - name: "lexical"
+      description: "Deterministic hashed char n-gram scheme (post-inference, no new model)"
+      source: "lexical"
+      size: 512
+      distance: "Cosine"
+      datatype: "uint8"
+      on_disk: true
+      screen: true
+  screen:
+    enabled: true
+    # Empirical, metric-driven judgment, not a hard-coded threshold. Rule is a
+    # deterministic per-corpus pass (energy concentration); recalibrate per
+    # corpus with `bun bin/reindex.js --recalibrate`. Never asserted internally.
+    rule: "energy"
+    keep_fraction: 0.5
+    recalibrate: false
+    mask_path: ".screen-mask.json"
+
+# Local CPU embedder. Switchable seam: change `type` to point at another
+# local/remote embedder without touching the brain or the seam.
+embedder:
+  type: "ollama"
+  url: "http://localhost:11434"
+  model: "nomic-embed-text"
+
+# Decision distillation on the cheap tier of the adopted router.
+# In this environment the router's cheap tier is Ollama (phi4:latest).
+distill:
+  type: "ollama"
+  url: "http://localhost:11434/v1"
+  model: "phi4:latest"
+  temperature: 0
+  max_tokens: 700
+
+# Periodic consolidate sweep over the opencode session DB (T2). Decoupled from
+# git commit lifecycle and session start/end hooks; run on demand or schedule.
+sweep:
+  # Empty -> default to $OPENCODE_DB or the standard opencode SQLite DB.
+  db_path: ""
+  # A session counts as closed when its last update is older than this
+  # (milliseconds) or it is archived.
+  closed_after_ms: 3600000
+  state_path: ".sweep-state.json"
+
+retry:
+  enabled: true
+  max_attempts: 3
+  backoff_ms: 500
+
+ids:
+  namespace_uuid: "7d0abf0e-2f1d-4b31-9b0c-6a1e65b1ad9c"
+
+logging:
+  level: "info"

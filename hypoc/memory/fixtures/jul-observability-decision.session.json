@@ -1,0 +1,29 @@
+{
+  "session": {
+    "id": "ses_jul_obs_0004",
+    "title": "OpenTelemetry into Grafana",
+    "time_created": "2026-07-18T09:30:00Z",
+    "time_updated": "2026-07-18T10:10:00Z",
+    "directory": "/Users/pjherron17/dev/example-service"
+  },
+  "messages": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "type": "text",
+          "text": "Which observability stack should we standardize on?"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "parts": [
+        {
+          "type": "text",
+          "text": "For observability the team decided to ship OpenTelemetry traces and metrics into Grafana. Rationale: vendor-neutral SDKs with a single dashboard for traces, logs, and metrics. Alternatives considered: a commercial APM vendor and a Prometheus-only stack without tracing."
+        }
+      ]
+    }
+  ]
+}
