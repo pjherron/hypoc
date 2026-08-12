@@ -1,4 +1,4 @@
-# ADR 0006 — Model Roster Convention
+# ADR 0007 — Model Roster Convention
 
 **Status**: Accepted
 **Date**: 2026-08-12

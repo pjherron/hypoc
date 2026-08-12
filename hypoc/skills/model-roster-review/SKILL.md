@@ -1,12 +1,12 @@
 ---
 name: model-roster-review
-description: Review or build a model roster for agentic development. Use when choosing which models fill routing tiers, auditing an existing ollama/OpenCode model list, refreshing stale picks, or evaluating a newly released model against the current roster. Follows ADR 0006.
+description: Review or build a model roster for agentic development. Use when choosing which models fill routing tiers, auditing an existing ollama/OpenCode model list, refreshing stale picks, or evaluating a newly released model against the current roster. Follows ADR 0007.
 origin: Hypoc
 ---
 
 # Model Roster Review
 
-Produce or update a roster that conforms to ADR 0006 (router spine, one primary
+Produce or update a roster that conforms to ADR 0007 (router spine, one primary
 per slot, capability ceilings, jurisdiction axes, monitor/excluded lists).
 
 ## When to Use
@@ -55,7 +55,7 @@ per slot, capability ceilings, jurisdiction axes, monitor/excluded lists).
 Machine-readable roster (JSON) keyed by router tier, plus a short narrative
 doc: decisions locked with rationale, the slot table, dispositions, sources
 with fetch dates. Concrete instances live in downstream (private) repos; the
-required shape is defined by ADR 0006.
+required shape is defined by ADR 0007.
 
 ## Rules
 
