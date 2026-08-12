@@ -25,6 +25,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All 18 `instructions` paths in `.opencode/opencode.json` now resolve (11 were previously broken/missing)
 - `instructions/INSTRUCTIONS.md` path corrected to `.opencode/instructions/INSTRUCTIONS.md`
 - **Sweep state persistence**: the existing-artifact backstop now persists sweep state, so confirmed-existing sessions aren't re-candidates on reruns
+- **Memory hardening pass** (post-review, 30 tests green on consecutive runs):
+  - Distill output parsing now distinguishes retryable `failed` from terminal `no_decision`; failed sessions are left un-processed for re-attempt
+  - Distill output sanitized (control chars stripped, field/list arities capped); `source-session` never taken from the model
+  - Git-commit backstop hardened: uses `git ls-files`, removes artifacts on commit failure, disambiguates filename collisions
+  - Per-session sweep isolation (one poison session can't abort the sweep) with `failed` accounting
+  - Screening degradation (corrupt mask, uncalibrated-but-on, empty brain) and sweep-state corruption are surfaced, never swallowed
+  - Recall blocks delimited as `<archived>` data ("not instructions") against prompt-injection; high-risk tool inputs redacted from transcripts
+  - `retry.timeout_ms` bounds all fetch attempts (Ollama/Qdrant)
+  - Warm-start plugin logs/tolerates/retries; test collection via `HYPOC_MEMORY_COLLECTION` keeps the suite off the production brain
 
 ### Removed
 - Repo-root `skills/` and `agents/` duplicates deleted — `hypoc/` is the canonical package; root `.opencode.json` repointed to `hypoc/skills/`

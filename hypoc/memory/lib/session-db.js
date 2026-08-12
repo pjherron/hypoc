@@ -43,6 +43,13 @@ function truncate(text, max) {
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }
 
+// Tool inputs that commonly carry secrets (bash commands, file writes, env
+// edits). The full payload must not flow into the distillation prompt, where
+// it would be echoed back into a decision artifact that then gets re-injected
+// into future sessions. Marked, not dropped: the model still sees that the
+// tool ran, but never its arguments.
+const REDACTED_TOOLS = new Set(["bash", "write", "edit"]);
+
 // Map one part row (data JSON) to a short text line for the transcript.
 function partToText(partData) {
   let data;
@@ -59,6 +66,9 @@ function partToText(partData) {
     case "tool-invocation": {
       const name = data.tool ?? data.invocation?.tool ?? "tool";
       const input = data.state?.input ?? data.input ?? data.invocation?.input;
+      if (REDACTED_TOOLS.has(name)) {
+        return `[${name}] <input redacted: withheld from distillation>`;
+      }
       if (input === undefined) return `[${name}]`;
       const json = typeof input === "string" ? input : JSON.stringify(input);
       return `[${name}] ${truncate(json, 240)}`;

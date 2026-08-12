@@ -16,6 +16,7 @@ const ALLOWED_DATATYPES = new Set(["float32", "uint8", "float16", "turbo4"]);
 const ALLOWED_EMBEDDER_TYPES = new Set(["ollama", "http"]);
 const ALLOWED_SCREEN_RULES = new Set(["energy", "variance", "none"]);
 const ALLOWED_SCHEME_SOURCES = new Set(["embedder", "lexical"]);
+const ALLOWED_DISTILL_TYPES = new Set(["ollama", "http"]);
 
 function requireObject(value, name) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -157,6 +158,9 @@ export function validateConfig(raw) {
 
   const distill = requireObject(ensureKey(root, "distill", "distill"), "distill");
   const distillType = requireString(ensureKey(distill, "type", "distill.type"), "distill.type");
+  if (!ALLOWED_DISTILL_TYPES.has(distillType)) {
+    throw new Error(`Config distill.type must be one of: ${Array.from(ALLOWED_DISTILL_TYPES).join(", ")}.`);
+  }
   const distillUrl = requireUrl(ensureKey(distill, "url", "distill.url"), "distill.url");
   const distillModel = requireString(ensureKey(distill, "model", "distill.model"), "distill.model");
   const temperature = requireInt(ensureKey(distill, "temperature", "distill.temperature"), "distill.temperature", { min: 0 });
@@ -166,6 +170,7 @@ export function validateConfig(raw) {
   const retryEnabled = requireBoolean(ensureKey(retry, "enabled", "retry.enabled"), "retry.enabled");
   const maxAttempts = requireInt(ensureKey(retry, "max_attempts", "retry.max_attempts"), "retry.max_attempts", { min: 1 });
   const backoffMs = requireInt(ensureKey(retry, "backoff_ms", "retry.backoff_ms"), "retry.backoff_ms", { min: 0 });
+  const timeoutMs = requireInt(ensureKey(retry, "timeout_ms", "retry.timeout_ms"), "retry.timeout_ms", { min: 0 });
 
   const ids = requireObject(ensureKey(root, "ids", "ids"), "ids");
   const namespaceUuid = requireUuid(ensureKey(ids, "namespace_uuid", "ids.namespace_uuid"), "ids.namespace_uuid");
@@ -220,6 +225,7 @@ export function validateConfig(raw) {
       enabled: retryEnabled,
       max_attempts: maxAttempts,
       backoff_ms: backoffMs,
+      timeout_ms: timeoutMs,
     },
     ids: {
       namespace_uuid: namespaceUuid,
@@ -252,5 +258,15 @@ export async function loadConfig() {
     throw new Error(`Failed to parse YAML config at ${CONFIG_PATH}: ${message}`);
   }
 
-  return validateConfig(raw);
+  const config = validateConfig(raw);
+
+  // Test hermeticity: allow the brain collection to be overridden so the test
+  // suite never touches the production store. Only the collection name is
+  // overridable — everything else stays validated.
+  const override = process.env.HYPOC_MEMORY_COLLECTION;
+  if (override) {
+    config.brain.collection = override;
+  }
+
+  return config;
 }

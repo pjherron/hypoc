@@ -9,6 +9,7 @@ import { beforeAll, afterAll, describe, expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
 import { readdirSync, readFileSync, rmSync, existsSync } from "node:fs";
 import path from "node:path";
+import { Database } from "bun:sqlite";
 
 const ROOT = path.resolve(import.meta.dir, "..");
 const REPO = path.resolve(ROOT, "..");
@@ -16,6 +17,11 @@ const DECISIONS = path.join(ROOT, "decisions");
 const FIXTURE_DB = path.join(ROOT, "fixtures", "session-db.sqlite3");
 const STATE = path.join(ROOT, ".sweep-test-state.json");
 const DRYRUN_STATE = path.join(ROOT, ".sweep-test-dryrun-state.json");
+
+// Hermetic isolation: every CLI spawned by this suite must operate on a
+// dedicated test collection, never the production brain. loadConfig() honors
+// this override (lib/config.js) and spawnSync inherits the environment.
+process.env.HYPOC_MEMORY_COLLECTION = "hypoc_memory_test";
 
 function runCli(binName, args) {
   const res = spawnSync("bun", [path.join(ROOT, "bin", binName), ...args], {
@@ -101,9 +107,13 @@ describe("recall seam", () => {
   test("garbage distillation gives wrong-or-empty recall: no garbage in the brain", () => {
     const out = runCli("recall.js", ["qzx plork vamut 88413 nertle"]);
     const lines = recallLines(out);
+    // Non-vacuous: the brain is populated (other fixtures are indexed), so a
+    // query must return SOMETHING; the assertion is that none of it is garbage.
+    expect(lines.length).toBeGreaterThan(0);
     for (const line of lines) {
       expect(line).not.toContain("source-session: ses_garbage_0007");
     }
+    expect(out).toContain("# Recalled");
   });
 
   test("recalled count is bounded by the Miller default and configurable", () => {
@@ -160,6 +170,52 @@ describe("consolidate sweep over real session records (T2)", () => {
     expect(out).toContain("# Sweep complete: 0 distilled");
     expect(out).toContain("0 candidates");
   });
+
+  test("the fresh-distill batch path runs deterministically for a never-committed session", () => {
+    // The shared fixture sessions end up with committed artifacts after the
+    // first run, so reruns only exercise the "existing" backstop. Build a
+    // throwaway session DB with a unique session id (never in git) and a fresh
+    // state file: the sweep MUST freshly distill it (status "indexed").
+    const unique = Date.now();
+    const freshDb = path.join(ROOT, `.sweep-test-fresh-${unique}.sqlite3`);
+    const freshState = path.join(ROOT, `.sweep-test-fresh-${unique}-state.json`);
+    let artifactRelPath = null;
+    try {
+      const db = new Database(freshDb);
+      db.run(`CREATE TABLE project (id text PRIMARY KEY, worktree text NOT NULL, vcs text, name text, time_created integer NOT NULL, time_updated integer NOT NULL, sandboxes text NOT NULL);
+              CREATE TABLE session (id text PRIMARY KEY, project_id text NOT NULL, parent_id text, slug text NOT NULL, directory text NOT NULL, title text NOT NULL, version text NOT NULL, time_created integer NOT NULL, time_updated integer NOT NULL, time_archived integer, agent text, model text, cost real DEFAULT 0 NOT NULL, tokens_input integer DEFAULT 0 NOT NULL, tokens_output integer DEFAULT 0 NOT NULL);
+              CREATE TABLE message (id text PRIMARY KEY, session_id text NOT NULL, time_created integer NOT NULL, time_updated integer NOT NULL, data text NOT NULL);
+              CREATE TABLE part (id text PRIMARY KEY, message_id text NOT NULL, session_id text NOT NULL, time_created integer NOT NULL, time_updated integer NOT NULL, data text NOT NULL);
+              CREATE INDEX message_session_time_created_id_idx ON message (session_id, time_created, id);`);
+      const sid = `ses_fresh_batch_${unique}`;
+      const start = Date.parse("2026-08-10T09:00:00Z");
+      const end = Date.parse("2026-08-10T09:30:00Z");
+      db.run(`INSERT INTO project (id, worktree, vcs, name, time_created, time_updated, sandboxes) VALUES ('prj_fresh', 'memory/fixtures', 'git', 'fresh', 1, 1, '[]')`);
+      db.run(`INSERT INTO session (id, project_id, slug, directory, title, version, time_created, time_updated) VALUES (?, 'prj_fresh', ?, '/tmp/example', 'fresh decision', '0.1.0', ?, ?)`, [sid, sid, start, end]);
+      db.run(`INSERT INTO message (id, session_id, time_created, time_updated, data) VALUES ('msg_f1', ?, ?, ?, ?)`, [sid, start, start, JSON.stringify({ role: "user", time: { created: start } })]);
+      db.run(`INSERT INTO part (id, message_id, session_id, time_created, time_updated, data) VALUES ('prt_f1', 'msg_f1', ?, ?, ?, ?)`, [sid, start, start, JSON.stringify({ type: "text", text: "We need to choose a fresh-decision approach for the demo: option A or option B?" })]);
+      db.run(`INSERT INTO message (id, session_id, time_created, time_updated, data) VALUES ('msg_f2', ?, ?, ?, ?)`, [sid, end, end, JSON.stringify({ role: "assistant", time: { created: end } })]);
+      db.run(`INSERT INTO part (id, message_id, session_id, time_created, time_updated, data) VALUES ('prt_f2', 'msg_f2', ?, ?, ?, ?)`, [sid, end, end, JSON.stringify({ type: "text", text: "The team decided on option A: it is simpler to reason about and cheaper to operate. Alternatives considered: option B, which was rejected for its operational overhead." })]);
+      db.close();
+
+      const out = runCli("sweep.js", ["--db", freshDb, "--state", freshState, "--closed-after", "0"]);
+      expect(out).toContain(`DISTILLED ${sid}`);
+
+      const state = readJson(freshState);
+      expect(state[sid].status).toBe("indexed");
+      expect(state[sid].artifact_path).toContain(".md");
+      artifactRelPath = state[sid].artifact_path;
+    } finally {
+      // Remove the throwaway DB/state AND undo the git commit the sweep made
+      // for the throwaway artifact, so repeated suite runs leave no garbage.
+      if (artifactRelPath) {
+        spawnSync("git", ["-C", REPO, "rm", "--ignore-unmatch", "--quiet", "--", artifactRelPath]);
+        spawnSync("git", ["-C", REPO, "commit", "--quiet", "-m", "test: remove fresh-batch artifact", "--", artifactRelPath]);
+      }
+      rmSync(freshDb, { force: true });
+      rmSync(freshState, { force: true });
+    }
+  }, 180_000);
 });
 
 describe("manual escape hatches (T4)", () => {
@@ -230,4 +286,14 @@ describe("scheme-append breadth + post-inference screening (T5)", () => {
     expect(recall[0]).toContain("2026-06-09-web-service-deployment-strategy.md");
     expect(recall[0]).toContain("source-session: ses_jun_deploy_0002");
   }, 180_000);
+});
+
+// Last in the file: wipes the test collection, so nothing may run after it.
+describe("empty-brain resilience", () => {
+  test("recall against an empty brain reports zero results instead of failing", () => {
+    runCli("reset.js", []);
+    const out = runCli("recall.js", ["anything at all"]);
+    expect(out).toContain("# Recalled 0 result(s)");
+    expect(recallLines(out).length).toBe(0);
+  });
 });

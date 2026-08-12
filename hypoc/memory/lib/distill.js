@@ -75,36 +75,72 @@ function extractJson(content) {
   }
 }
 
+// The distill model's output is UNTRUSTED data: it is derived from session
+// transcripts (which may carry prompts of their own). Sanitize before it is
+// rendered into YAML frontmatter or re-injected into future sessions.
+function sanitizeScalar(value, { max }) {
+  if (typeof value !== "string") return "";
+  return value
+    .replace(/[\r\n\0-\x1f\x7f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
+function sanitizeList(value, { max, maxItems }) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item) => typeof item === "string")
+    .slice(0, maxItems)
+    .map((item) => sanitizeScalar(item, { max }))
+    .filter(Boolean);
+}
+
 export function parseDecision(content, fixture) {
   const parsed = extractJson(content);
   if (!parsed || typeof parsed !== "object") {
-    return { no_decision: true, reason: "unparseable distill output" };
+    return { failed: true, reason: "unparseable distill output" };
   }
   if (parsed.no_decision) {
     return { no_decision: true, reason: parsed.reason ?? "model reported no decision" };
   }
-  const title = (parsed.title ?? "").trim();
-  const decision = (parsed.decision ?? "").trim();
+  const title = sanitizeScalar(parsed.title, { max: 120 });
+  const decision = sanitizeScalar(parsed.decision, { max: 2000 });
   if (!title || !decision) {
-    return { no_decision: true, reason: "distill output missing title or decision" };
+    // A missing/malformed answer is a MODEL failure, not a determination that
+    // no decision exists. Retryable: do not record it as a terminal no_decision.
+    return { failed: true, reason: "distill output missing title or decision" };
   }
   return {
     title,
     decision,
-    rationale: (parsed.rationale ?? "").trim(),
-    alternatives: Array.isArray(parsed.alternatives) ? parsed.alternatives.filter((a) => typeof a === "string") : [],
-    topics: Array.isArray(parsed.topics) ? parsed.topics.filter((t) => typeof t === "string") : [],
+    rationale: sanitizeScalar(parsed.rationale, { max: 4000 }),
+    alternatives: sanitizeList(parsed.alternatives, { max: 2000, maxItems: 8 }),
+    topics: sanitizeList(parsed.topics, { max: 60, maxItems: 8 }),
     // Authoritative: the source-session link comes from the fixture, never the model.
     source_session: fixture.session?.id ?? "unknown",
     date: (fixture.session?.time_created ?? "").slice(0, 10),
   };
 }
 
+// The cheap-tier router switch, mirroring the embedder's. Both types currently
+// speak the OpenAI-compatible chat-completions contract against `distill.url`;
+// the switch is the seam for future backends (a FastAPI server, etc.).
+function distillEndpoint(config) {
+  switch (config.distill.type) {
+    case "ollama":
+    case "http":
+      return `${config.distill.url}/chat/completions`;
+    default:
+      throw new Error(`Unsupported distill type: ${config.distill.type}`);
+  }
+}
+
 export async function distillSession(config, fixture) {
   const transcript = fixtureTranscript(fixture);
   const sessionId = fixture.session?.id ?? "unknown";
   const res = await fetchWithRetry(
-    `${config.distill.url}/chat/completions`,
+    distillEndpoint(config),
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },

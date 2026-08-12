@@ -24,12 +24,27 @@ export function maskFilePath(config) {
 
 export async function loadMasks(config) {
   const file = maskFilePath(config);
+  let raw;
   try {
-    const raw = JSON.parse(await readFile(file, "utf-8"));
-    return raw?.schemes ?? {};
-  } catch {
+    raw = JSON.parse(await readFile(file, "utf-8"));
+  } catch (error) {
+    const missing = error?.code === "ENOENT";
+    if (!missing) {
+      // A corrupt mask file silently reverting screening to identity would
+      // store unscreened vectors with everything claiming screening is on.
+      console.warn(
+        `[memory] screening mask ${file} is unreadable; screening treated as off until recalibrated.`,
+      );
+    }
     return {};
   }
+  if (!raw || typeof raw !== "object" || typeof raw.schemes !== "object" || raw.schemes === null) {
+    console.warn(
+      `[memory] screening mask ${file} is malformed; screening treated as off until recalibrated.`,
+    );
+    return {};
+  }
+  return raw.schemes;
 }
 
 export async function saveMasks(config, schemes) {

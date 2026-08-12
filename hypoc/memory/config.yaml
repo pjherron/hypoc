@@ -70,6 +70,8 @@ retry:
   enabled: true
   max_attempts: 3
   backoff_ms: 500
+  # Per-attempt timeout for every fetch (distill, embed, Qdrant). 0 disables.
+  timeout_ms: 60000
 
 ids:
   namespace_uuid: "7d0abf0e-2f1d-4b31-9b0c-6a1e65b1ad9c"

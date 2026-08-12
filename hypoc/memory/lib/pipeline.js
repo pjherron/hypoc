@@ -3,7 +3,7 @@
 // inference transforms) -> screen to the information-bearing core -> index into
 // the brain as named <=8-bit vectors.
 
-import { mkdir, writeFile, readdir, readFile } from "node:fs/promises";
+import { mkdir, writeFile, readdir, readFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -35,8 +35,8 @@ export function slugify(title) {
 
 export function renderArtifact(decision) {
   const topics = decision.topics.length
-    ? decision.topics.map((topic) => `"${topic}"`).join(", ")
-    : "[]";
+    ? decision.topics.map((topic) => `"${topic.replace(/"/g, '\\"')}"`).join(", ")
+    : "";
   const alternatives = decision.alternatives.length
     ? `\n## Alternatives considered\n\n${decision.alternatives.map((alt) => `- ${alt}`).join("\n")}`
     : "";
@@ -117,12 +117,22 @@ export function toRepoPath(artifactPath) {
   return path.relative(repoRoot(), artifactPath);
 }
 
+async function exists(filePath) {
+  try {
+    await readFile(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function indexDecision(config, decision, artifactPath, { scheme } = {}) {
   const { text, schemes } = await embedDecision(config, decision);
   const targetSchemes = scheme
     ? { [scheme]: schemes[scheme] }
     : schemes;
-  const { vectors } = await screenVectors(config, targetSchemes);
+  const { vectors, calibrated } = await screenVectors(config, targetSchemes);
+  warnUncalibrated(config, calibrated);
   const id = await indexArtifact(config, {
     artifactPath: toRepoPath(artifactPath),
     title: decision.title,
@@ -139,7 +149,8 @@ export async function indexArtifactFile(config, artifactPath) {
   const artifact = await readArtifact(artifactPath);
   const text = `${artifact.title}\n\n${artifact.body}`;
   const schemes = await embedTextSchemes(config, text);
-  const { vectors } = await screenVectors(config, schemes);
+  const { vectors, calibrated } = await screenVectors(config, schemes);
+  warnUncalibrated(config, calibrated);
   const id = await indexArtifact(config, {
     artifactPath: toRepoPath(artifactPath),
     title: artifact.title,
@@ -148,6 +159,20 @@ export async function indexArtifactFile(config, artifactPath) {
     vectors,
   });
   return id;
+}
+
+// Screening silently degrading to identity is the dangerous case: stored
+// vectors would be unscreened while everything claims screening is on. Surface
+// it loudly rather than swallowing it.
+function warnUncalibrated(config, calibrated) {
+  if (calibrated) return;
+  const masked = config.brain.vectors.some((vector) => vector.screen);
+  if (masked) {
+    console.warn(
+      "[memory] screening is configured but NOT calibrated — vectors stored unscreened. " +
+        "Run `bun bin/reindex.js --recalibrate` to compute corpus masks.",
+    );
+  }
 }
 
 // Read a committed decision artifact: parse frontmatter (title, source-session,
@@ -168,10 +193,22 @@ export async function readArtifact(artifactPath) {
   };
 }
 
+// Committed artifacts: only files actually tracked in git. A file written but
+// never committed (e.g. a commit failure) must NOT be treated as a committed
+// artifact — otherwise the backstop would launder a failed commit into
+// "existing" and never retry the commit.
 export async function committedArtifacts() {
   const dir = decisionsDir();
-  const files = (await readdir(dir).catch(() => [])).filter((file) => file.endsWith(".md"));
-  return files.sort().map((file) => path.join(dir, file));
+  let tracked = [];
+  try {
+    const { stdout } = await execFileAsync("git", ["-C", repoRoot(), "ls-files", "--", "memory/decisions"]);
+    tracked = stdout.split("\n").filter(Boolean);
+  } catch {
+    // Not a git checkout (unusual): fall back to a plain directory scan so the
+    // module still works standalone.
+    tracked = (await readdir(dir).catch(() => [])).filter((file) => file.endsWith(".md"));
+  }
+  return tracked.map((rel) => path.join(repoRoot(), rel));
 }
 
 // The artifact (if any) whose `source-session` link points at this session.
@@ -238,26 +275,48 @@ export async function reindexCommitted(config, { recalibrate = false, scheme } =
   return { results, masks };
 }
 
+// Write + commit a decision artifact. The filename is date + slug(title); two
+// sessions on the same date with the same normalized title must not silently
+// overwrite each other — disambiguate with a numeric suffix. If the git commit
+// fails, the file is removed so the backstop can never mistake it for a
+// committed artifact.
 export async function writeDecisionArtifact(config, decision) {
   const dir = decisionsDir();
   await mkdir(dir, { recursive: true });
-  const fileName = `${decision.date}-${slugify(decision.title)}.md`;
-  const artifactPath = path.join(dir, fileName);
+  const baseName = `${decision.date}-${slugify(decision.title)}`;
+  let artifactPath = path.join(dir, `${baseName}.md`);
+  let suffix = 2;
+  while (await exists(artifactPath)) {
+    const existing = await readArtifact(artifactPath).catch(() => null);
+    // Same source-session -> re-distillation of the same decision: overwrite.
+    if (existing && existing.source_session === decision.source_session) break;
+    artifactPath = path.join(dir, `${baseName}-${suffix}.md`);
+    suffix += 1;
+  }
   const markdown = renderArtifact(decision);
   await writeFile(artifactPath, markdown, "utf-8");
-  await gitAddCommit(
-    artifactPath,
-    `decision: ${decision.title} (source-session ${decision.source_session})`,
-  );
+  try {
+    await gitAddCommit(
+      artifactPath,
+      `decision: ${decision.title} (source-session ${decision.source_session})`,
+    );
+  } catch (error) {
+    await unlink(artifactPath).catch(() => {});
+    throw error;
+  }
   return artifactPath;
 }
 
 // Distill a session record, write + commit the artifact, then embed and index.
 // A record is { session: { id, time_created, ... }, messages: [...] } — the
 // shape produced by the fixture reader or the session-DB reader. Returns
-// { status: "indexed" } or { status: "no_decision", reason }.
+// { status: "indexed" }, { status: "no_decision", reason }, or
+// { status: "failed", reason } for a retryable model/parse failure.
 export async function processRecord(config, record) {
   const decision = await distillSession(config, record);
+  if (decision.failed) {
+    return { status: "failed", reason: decision.reason, source_session: record.session?.id ?? "unknown" };
+  }
   if (decision.no_decision) {
     return { status: "no_decision", reason: decision.reason, source_session: record.session?.id ?? "unknown" };
   }

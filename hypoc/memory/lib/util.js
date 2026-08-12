@@ -10,15 +10,22 @@ function isRetryableStatus(status) {
   return RETRYABLE_STATUS.has(status);
 }
 
+// A hung upstream (Ollama/Qdrant) must never block the sweep or a session's
+// first request forever. When retry.timeout_ms > 0 every attempt is bounded;
+// a caller-provided signal is respected and not overridden.
 export async function fetchWithRetry(url, options, context) {
   const { retry, operation } = context;
   const retryEnabled = retry.enabled;
+  const timeoutMs = Number.isFinite(retry.timeout_ms) ? retry.timeout_ms : 0;
   let attempt = 0;
 
   while (true) {
     attempt += 1;
+    const init = timeoutMs > 0 && !options.signal
+      ? { ...options, signal: AbortSignal.timeout(timeoutMs) }
+      : options;
     try {
-      const res = await fetch(url, options);
+      const res = await fetch(url, init);
       if (
         !retryEnabled ||
         res.ok ||
@@ -36,7 +43,6 @@ export async function fetchWithRetry(url, options, context) {
     if (retryEnabled && retry.backoff_ms > 0) {
       await delay(retry.backoff_ms * attempt);
     }
-    void operation;
   }
 }
 

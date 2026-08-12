@@ -27,11 +27,25 @@ The mnemonic centerline is implemented as a self-contained `hypoc/memory` module
 - The sweep tracks processed sessions in a JSON state file (`config sweep.state_path`); nothing is distilled twice, no closed session is left unrecollectable.
 - The existing-artifact backstop indexes a session's already-committed artifact and **persists state** for it, so confirmed-existing sessions are not re-candidates on later runs.
 - Tests are rerun-safe: the suite passes on consecutive runs (fresh distill vs. confirmed-existing both accepted).
+- State writes are atomic (temp + rename); a corrupt state file is backed up and resets with a warning, never a silent `{}` that would re-queue every session.
+
+## Hardening pass (post-review, 2026-08-12)
+
+A consolidated review pass (code review, test-quality, and silent-failure reviews) produced findings that were all fixed:
+
+- **Retryable failures distinguished from determinations**: distill output that is unparseable or missing `title`/`decision` is now a retryable `failed` status (never recorded as `no_decision`); the sweep leaves failed sessions un-processed so they are re-attempted on the next run.
+- **Untrusted distill output sanitized**: control characters and newlines stripped, field lengths capped, list arities capped — before output becomes YAML frontmatter or re-injected into future sessions. `source-session` is always taken from the session record, never the model.
+- **Screening degradation surfaced**: mask/calibration problems (corrupt mask file, screening-on-but-uncalibrated, empty brain) are loudly warned or affirmed, never silently swallowed.
+- **Git-commit backstop hardened**: the backstop now uses git tracking (`ls-files`) so a file written but never committed is never mistaken for a committed artifact; a failed commit removes the file; date+slug filename collisions are disambiguated with a numeric suffix.
+- **Artifact/state robustness**: recall blocks are delimited as `<archived>` DATA ("not instructions") against prompt injection; high-risk tool inputs (bash/write/edit) are redacted from transcripts before distillation; the plugin logs/tolerates/retries instead of silently returning `""`.
+- **Timeouts**: `retry.timeout_ms` bounds every fetch attempt (Ollama, Qdrant) via `AbortSignal.timeout`.
+- **Hermetic tests**: the suite runs against a dedicated overrideable collection (`HYPOC_MEMORY_COLLECTION`), never the production brain; plugin wiring, state-corruption recovery, distill parse/sanitize, empty-brain, and a deterministic fresh-distill batch path are all covered.
+- **Per-session sweep isolation**: one poison session no longer aborts the whole sweep; `failed` is counted in the summary and the session is re-attempted later.
 
 ## Consequences
 
 - The seam is proven: fixture-inspired queries recall artifacts with `source-session` links; garbage distillation yields wrong-or-empty recall; recall quality holds on screened vectors.
-- 18 tests, all green on consecutive runs, driving the CLIs from outside — internals (store, embedder, dimensions, masks) never asserted.
+- 30 tests, all green on consecutive runs, driving the CLIs from outside — internals (store, embedder, dimensions, masks) never asserted.
 - Sweep runs on demand or scheduled, decoupled from git and session lifecycle; real history is recallable once swept.
 
 ## Related
