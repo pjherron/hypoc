@@ -1,5 +1,4 @@
 {
-  "$schema": "./sources.schema.json",
   "version": "1",
   "upstreams": {
     "ecc-universal": {
