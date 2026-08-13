@@ -5,6 +5,7 @@
     "ecc-universal": {
       "repo": "https://github.com/affaan-m/ECC",
       "npm": "ecc-universal",
+      "license": "MIT",
       "synced_at": "1.10.0",
       "latest_known": "2.0.0",
       "notes": "Skills, agents, commands, hooks. Update path: npm show ecc-universal version"
@@ -12,6 +13,7 @@
     "opencode-plugin": {
       "repo": "https://github.com/sst/opencode",
       "npm": "@opencode-ai/plugin",
+      "license": "MIT",
       "synced_at": "1.14.19",
       "latest_known": "1.18.0",
       "notes": "OpenCode plugin API. Listed in hypoc/.opencode/package.json"
@@ -19,6 +21,7 @@
     "superpowers": {
       "repo": "https://github.com/obra/superpowers",
       "type": "git",
+      "license": "MIT",
       "synced_at": null,
       "notes": "Skill discovery plugin. Listed in .opencode.json plugins array"
     }

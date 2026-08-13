@@ -1,0 +1,18 @@
+hypoc
+Copyright 2026 Hypothia
+
+This product includes software developed by Hypothia
+(https://github.com/pjherron/hypoc), licensed under the Apache License,
+Version 2.0. See LICENSE for the full text.
+
+------------------------------------------------------------------------
+
+Portions of this project are vendored from, or fetch plugins from, the
+following third-party sources. Each retains its original license; the
+upstream-to-skill/agent mapping is tracked in sources.json.
+
+- superpowers — https://github.com/obra/superpowers — MIT License
+- ECC (npm: ecc-universal) — https://github.com/affaan-m/ECC — MIT License
+- opencode / @opencode-ai/plugin — https://github.com/sst/opencode — MIT License
+
+Licenses verified 2026-08-12 via the GitHub and npm registries.
