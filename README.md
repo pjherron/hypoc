@@ -62,3 +62,8 @@ See [QUICKSTART.md](QUICKSTART.md) — clone, `./bin/install`, sync models, run 
 - **2026-08-12** — review hardening pass (30 tests green); distribution boundary settled (ADR 0005); quickstart onboarding documented.
 
 Cloud model tiers and the SAS migration domain overlay (pharma QC) are separate projects. See [TODO.md](TODO.md).
+
+## License
+
+[Apache-2.0](LICENSE) — Copyright 2026 Hypothia. Upstream sources for vendored
+skills and agents are tracked in [`sources.json`](sources.json).

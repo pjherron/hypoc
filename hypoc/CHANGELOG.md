@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Apache-2.0 license** (`LICENSE` at repo root), copyright 2026 Hypothia
+- **Model roster convention** (ADR 0007, `docs/adr/0007-model-roster-convention.md`): roster shape keyed to the router's deployment tiers, one primary per slot, capability ceilings with escalation advisory, RAM-class sizing rule, jurisdiction axes
+- **model-roster-review skill**: the roster review/audit method per ADR 0007; concrete rosters live in downstream distributions
 - **Memory module** (`hypoc/memory/`): mnemonic centerline implemented — distill → committed decision artifact (`source-session` link) → embed → screen → index → recall (ADR 0006)
   - `bin/sweep.js`: periodic consolidation over real opencode session history, state-tracked, distill-on-consolidate backstop, no double-distillation
   - `bin/recall.js` + `bin/distill-session.js`: `/recall` and `/distill` commands
