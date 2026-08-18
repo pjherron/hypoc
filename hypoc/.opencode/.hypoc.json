@@ -1,4 +1,5 @@
 {
+  "//": "Canonical workspace config. opencode.json in this directory is a regular-file copy of this file so Windows Git users get a parseable config; keep them in sync.",
   "$schema": "https://opencode.ai/config.json",
   "model": "ollama/llama3.1:8b",
   "small_model": "ollama/llama3.1:8b",

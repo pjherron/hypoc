@@ -14,7 +14,7 @@ The repo presented three conflicting answers: QUICKSTART.md treated hypoc as a p
 Hypoc is a **distribution layered on top of vanilla opencode**:
 
 - The user installs opencode separately (prerequisite).
-- Hypoc adds the package: workspace config (`.opencode/opencode.json` → `.hypoc.json`), skills, agents, plugins (model router, memory, superpowers, ecc-universal).
+- Hypoc adds the package: workspace config (`.opencode/opencode.json`, kept in sync with `.hypoc.json`), skills, agents, plugins (model router, memory, superpowers, ecc-universal).
 - The `hypoc` launcher is the single canonical entry point; it wraps opencode with the hypoc workspace configuration.
 
 The decision is marked "today's boundary": a standalone product bundling opencode itself remains a possible future direction and is not ruled out.
