@@ -274,14 +274,13 @@ export const ECCHooksPlugin: ECCHooksPluginFn = async ({
 
       log("info", `[ECC] Session started - profile=${currentProfile}`)
 
-      // Check for project-specific context files
-      try {
-        const hasClaudeMd = await $`test -f ${worktree}/CLAUDE.md && echo "yes"`.text()
-        if (hasClaudeMd.trim() === "yes") {
-          log("info", "[ECC] Found CLAUDE.md - loading project context")
-        }
-      } catch {
-        // No CLAUDE.md found
+      // Check for project-specific context files. Use fs.existsSync instead of
+      // shelling out to `test -f`: Bun Shell's `$` does not implement `test` as
+      // a builtin on every platform (notably Windows), so the failed spawn
+      // writes a "bun: command not found: test" line straight to stderr even
+      // though the surrounding try/catch swallows the thrown error.
+      if (fs.existsSync(path.join(worktreePath, "CLAUDE.md"))) {
+        log("info", "[ECC] Found CLAUDE.md - loading project context")
       }
     },
 
@@ -329,11 +328,15 @@ export const ECCHooksPlugin: ECCHooksPluginFn = async ({
         log("info", "[ECC] Audit passed: No console.log statements found")
       }
 
-      // Desktop notification (macOS)
-      try {
-        await $`osascript -e 'display notification "Task completed!" with title "OpenCode ECC"' 2>/dev/null`
-      } catch {
-        // Notification not supported or failed
+      // Desktop notification (macOS only — osascript doesn't exist on
+      // Windows/Linux, so skip the shell call entirely there instead of
+      // letting Bun Shell print a "command not found" line).
+      if (process.platform === "darwin") {
+        try {
+          await $`osascript -e 'display notification "Task completed!" with title "OpenCode ECC"' 2>/dev/null`
+        } catch {
+          // Notification not supported or failed
+        }
       }
 
       // Clear tracked files for next task
@@ -403,7 +406,10 @@ export const ECCHooksPlugin: ECCHooksPluginFn = async ({
         PROJECT_ROOT: worktree || directory,
       }
 
-      // Detect package manager
+      // Detect package manager. Use fs.existsSync instead of `test -f`: Bun
+      // Shell's `test` builtin isn't reliable cross-platform (Windows in
+      // particular), and this hook runs before EVERY shell command, so a
+      // failed spawn here spams "bun: command not found: test" repeatedly.
       const lockfiles: Record<string, string> = {
         "bun.lockb": "bun",
         "pnpm-lock.yaml": "pnpm",
@@ -411,12 +417,9 @@ export const ECCHooksPlugin: ECCHooksPluginFn = async ({
         "package-lock.json": "npm",
       }
       for (const [lockfile, pm] of Object.entries(lockfiles)) {
-        try {
-          await $`test -f ${worktree}/${lockfile}`
+        if (fs.existsSync(path.join(worktree || directory, lockfile))) {
           env.PACKAGE_MANAGER = pm
           break
-        } catch {
-          // Not found, try next
         }
       }
 
@@ -430,11 +433,8 @@ export const ECCHooksPlugin: ECCHooksPluginFn = async ({
       }
       const detected: string[] = []
       for (const [file, lang] of Object.entries(langDetectors)) {
-        try {
-          await $`test -f ${worktree}/${file}`
+        if (fs.existsSync(path.join(worktree || directory, file))) {
           detected.push(lang)
-        } catch {
-          // Not found
         }
       }
       if (detected.length > 0) {
