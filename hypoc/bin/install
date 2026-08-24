@@ -12,9 +12,10 @@ QDRANT_DIR="$HYPOC_DIR/.swarm/qdrant"
 
 # Models the workspace config actually references:
 #   llama3.1:8b      default + small model (.hypoc.json)
-#   phi4:latest      build agent + memory distillation
+#   qwen3.5:latest   memory distillation (roster-aligned; phi4 removed, excluded from
+#                    the current model roster: reasoning-fine, agentic-weak, no slot)
 #   nomic-embed-text memory embeddings
-REQUIRED_MODELS=("llama3.1:8b" "phi4:latest" "nomic-embed-text")
+REQUIRED_MODELS=("llama3.1:8b" "qwen3.5:latest" "nomic-embed-text")
 
 say() { echo "[hypoc install] $*"; }
 

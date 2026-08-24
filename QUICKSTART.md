@@ -23,7 +23,7 @@ cd hypoc/hypoc
 ```
 
 Installs the `hypoc` command, Ollama and Qdrant if missing, pulls the models the
-workspace needs (`llama3.1:8b`, `phi4`, `nomic-embed-text`), and puts `~/.local/bin`
+workspace needs (`llama3.1:8b`, `qwen3.5:latest`, `nomic-embed-text`), and puts `~/.local/bin`
 on your PATH. Then registers your Ollama models:
 
 ```bash
@@ -53,7 +53,7 @@ names needed.
 | `hypoc` launcher | `~/.local/bin/hypoc` (symlink) | Single entry point |
 | PATH entry | `~/.zshrc` / `~/.bashrc` / `~/.bash_profile` | So `hypoc` resolves |
 | Ollama | Homebrew cask (macOS) / `ollama.com` script (Linux) | Local model runtime |
-| Ollama models | `llama3.1:8b`, `phi4:latest`, `nomic-embed-text` (~14GB) | Default model, build/distill, embeddings |
+| Ollama models | `llama3.1:8b`, `qwen3.5:latest`, `nomic-embed-text` (~14GB) | Default model, build/distill, embeddings |
 | Qdrant binary | `hypoc/hypoc/.swarm/qdrant/` (repo-local) | Memory brain store |
 | Ollama model registration | `~/.config/opencode/opencode.json` | opencode sees your local models |
 | Workspace config, skills, agents | the cloned repo (`hypoc/hypoc/`) | The hypoc surface |
