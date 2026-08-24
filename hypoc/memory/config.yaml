@@ -48,11 +48,13 @@ embedder:
   model: "nomic-embed-text"
 
 # Decision distillation on the cheap tier of the adopted router.
-# In this environment the router's cheap tier is Ollama (phi4:latest).
+# In this environment the router's cheap tier is Ollama (qwen3.5:latest,
+# per bmxoc/models/roster.json's 16GB-class local primary). phi4:latest is
+# excluded from the current roster (reasoning-fine, agentic-weak; no slot).
 distill:
   type: "ollama"
   url: "http://localhost:11434/v1"
-  model: "phi4:latest"
+  model: "qwen3.5:latest"
   temperature: 0
   max_tokens: 700
 

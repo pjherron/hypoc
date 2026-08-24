@@ -8,7 +8,7 @@ The single contract is the read path **`recall(query) → artifacts`** (with eac
 
 ## Pipeline
 
-1. **Distill** — a session record is extracted by the cheap router tier (Ollama `phi4:latest`). No decision → `NO_DECISION` (recorded, not retried forever).
+1. **Distill** — a session record is extracted by the cheap router tier (Ollama `qwen3.5:latest`, per bmxoc's roster). No decision → `NO_DECISION` (recorded, not retried forever).
 2. **Committed artifact** — the decision is written as markdown with a `source-session:` line and committed to git.
 3. **Embed every scheme** — each configured scheme is a named vector, ≤8-bit per dimension, full-precision copy dropped at storage:
    - `content` — stock embedder output (nomic-embed-text, `turbo4` 4-bit).

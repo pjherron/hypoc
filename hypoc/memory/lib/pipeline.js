@@ -180,7 +180,11 @@ function warnUncalibrated(config, calibrated) {
 // Read a committed decision artifact: parse frontmatter (title, source-session,
 // topics, date) plus the markdown body.
 export async function readArtifact(artifactPath) {
-  const text = await readFile(artifactPath, "utf-8");
+  const raw = await readFile(artifactPath, "utf-8");
+  // Normalize CRLF -> LF: committed artifacts use LF, but Windows checkouts
+  // with core.autocrlf=true rewrite them to CRLF, which the frontmatter
+  // regex (anchored on literal \n) would otherwise fail to match.
+  const text = raw.replace(/\r\n/g, "\n");
   const match = text.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
   if (!match) {
     throw new Error(`Artifact ${artifactPath} is missing frontmatter.`);
