@@ -535,7 +535,9 @@
   },
   "provider": {
     "ollama": {
-      "url": "http://localhost:11434"
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      }
     }
   }
 }

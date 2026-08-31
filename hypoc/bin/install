@@ -113,7 +113,26 @@ exec ./qdrant --disable-telemetry
 EOF
 chmod +x "$QDRANT_DIR/run-qdrant.sh"
 
-# --- 5. Plugin dependencies (ecc-universal, superpowers) -----------------------
+# --- 5. Model-router plugin dependencies (@opencode-ai/plugin) -----------------
+#
+# plugins/opencode-model-router/src/index.ts does a runtime
+# `import { tool } from "@opencode-ai/plugin"`. Node/Bun resolves that by
+# walking up node_modules from the importing file's own directory, so it
+# needs a node_modules/@opencode-ai/plugin that is an ancestor of src/ -
+# package.json pins the exact version; this just runs the install so it's
+# actually present instead of only being a config for someone else to run
+# manually.
+MODEL_ROUTER_DIR="$HYPOC_DIR/plugins/opencode-model-router"
+if [ -f "$MODEL_ROUTER_DIR/package.json" ]; then
+  if command -v npm >/dev/null 2>&1; then
+    say "opencode-model-router: installing dependencies..."
+    (cd "$MODEL_ROUTER_DIR" && npm install --no-audit --no-fund)
+  else
+    say "WARNING: npm not found - opencode-model-router's @opencode-ai/plugin dependency will not be installed. The router will fail to load until this is resolved."
+  fi
+fi
+
+# --- 6. Plugin dependencies (ecc-universal, superpowers) -----------------------
 #
 # .opencode.json's plugin array references these two packages, but until now no
 # installer actually provisioned them - they were silently assumed to be
@@ -172,6 +191,6 @@ if [ -n "$SUPERPOWERS_TAG" ] && [ -n "$SUPERPOWERS_REPO" ]; then
   fi
 fi
 
-# --- 6. Done --------------------------------------------------------------------
+# --- 7. Done --------------------------------------------------------------------
 
 say "done. Open a new shell (or source your rc) and run: hypoc"
