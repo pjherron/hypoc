@@ -264,9 +264,9 @@
         ]
       },
       "medium": {
-        "model": "ollama/phi4:latest",
+        "model": "ollama/qwen3.5:latest",
         "costRatio": 5,
-        "description": "Local phi4 for implementation, refactoring, and tests (free)",
+        "description": "Local qwen3.5 for implementation, refactoring, and tests (free)",
         "steps": 50,
         "whenToUse": [
           "Feature implementation",
