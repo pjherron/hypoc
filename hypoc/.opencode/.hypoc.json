@@ -29,7 +29,7 @@
     "build": {
       "description": "Primary coding agent for development work",
       "mode": "primary",
-      "model": "ollama/phi4:latest",
+      "model": "ollama/qwen3.5:latest",
       "tier": "capable",
       "tools": {
         "write": true,
@@ -43,7 +43,7 @@
       "description": "Expert planning specialist for complex features and refactoring. Use for implementation planning, architectural changes, or complex refactoring.",
       "mode": "subagent",
       "hidden": true,
-      "model": "ollama/phi4:latest",
+      "model": "ollama/qwen3.5:latest",
       "tier": "capable",
       "prompt": "{file:prompts/agents/planner.txt}",
       "tools": {
@@ -57,7 +57,7 @@
       "description": "Software architecture specialist for system design, scalability, and technical decision-making.",
       "mode": "subagent",
       "hidden": true,
-      "model": "ollama/phi4:latest",
+      "model": "ollama/qwen3.5:latest",
       "tier": "capable",
       "prompt": "{file:prompts/agents/architect.txt}",
       "tools": {
@@ -71,7 +71,7 @@
       "description": "Expert code review specialist. Reviews code for quality, security, and maintainability. Use immediately after writing or modifying code.",
       "mode": "subagent",
       "hidden": true,
-      "model": "ollama/phi4:latest",
+      "model": "ollama/qwen3.5:latest",
       "tier": "capable",
       "prompt": "{file:prompts/agents/code-reviewer.txt}",
       "tools": {
@@ -85,7 +85,7 @@
       "description": "Security vulnerability detection and remediation specialist. Use after writing code that handles user input, authentication, API endpoints, or sensitive data.",
       "mode": "subagent",
       "hidden": true,
-      "model": "ollama/phi4:latest",
+      "model": "ollama/qwen3.5:latest",
       "tier": "capable",
       "prompt": "{file:prompts/agents/security-reviewer.txt}",
       "tools": {
@@ -99,7 +99,7 @@
       "description": "Test-Driven Development specialist enforcing write-tests-first methodology. Use when writing new features, fixing bugs, or refactoring code. Ensures 80%+ test coverage.",
       "mode": "subagent",
       "hidden": true,
-      "model": "ollama/phi4:latest",
+      "model": "ollama/qwen3.5:latest",
       "tier": "capable",
       "prompt": "{file:prompts/agents/tdd-guide.txt}",
       "tools": {
