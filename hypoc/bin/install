@@ -113,6 +113,65 @@ exec ./qdrant --disable-telemetry
 EOF
 chmod +x "$QDRANT_DIR/run-qdrant.sh"
 
-# --- 5. Done --------------------------------------------------------------------
+# --- 5. Plugin dependencies (ecc-universal, superpowers) -----------------------
+#
+# .opencode.json's plugin array references these two packages, but until now no
+# installer actually provisioned them - they were silently assumed to be
+# pre-installed. This makes them real, pinned, managed dependencies. Pins live
+# in versions.json (single source of truth), mirroring bmxoc's versions.json
+# pattern, so bumping a version only means editing one file.
+#
+# Note: this only guarantees the packages are present on disk at a known
+# version. Whether opencode's plugin-array loader actually picks them up on
+# your installed opencode version is a separate, open upstream question (see
+# versions.json's notes on superpowers) - not something this step can fix.
+
+VERSIONS_FILE="$HYPOC_DIR/versions.json"
+
+if [ -f "$VERSIONS_FILE" ] && command -v node >/dev/null 2>&1; then
+  ECC_PINNED="$(node -pe "require('$VERSIONS_FILE').dependencies['ecc-universal'].pinned" 2>/dev/null || true)"
+  SUPERPOWERS_TAG="$(node -pe "require('$VERSIONS_FILE').dependencies['superpowers'].pinnedTag" 2>/dev/null || true)"
+  SUPERPOWERS_REPO="$(node -pe "require('$VERSIONS_FILE').dependencies['superpowers'].repo" 2>/dev/null || true)"
+else
+  say "WARNING: versions.json missing or node not found - skipping plugin dependency install"
+  ECC_PINNED=""
+  SUPERPOWERS_TAG=""
+  SUPERPOWERS_REPO=""
+fi
+
+if [ -n "$ECC_PINNED" ]; then
+  if command -v npm >/dev/null 2>&1; then
+    installed_version="$(npm ls -g ecc-universal --depth=0 --json 2>/dev/null | node -pe "try { JSON.parse(require('fs').readFileSync(0,'utf-8')).dependencies['ecc-universal'].version } catch { '' }" 2>/dev/null || true)"
+    if [ "$installed_version" = "$ECC_PINNED" ]; then
+      say "ecc-universal: already at pinned version $ECC_PINNED"
+    else
+      say "ecc-universal: installing $ECC_PINNED (found: ${installed_version:-none})..."
+      npm install -g "ecc-universal@$ECC_PINNED"
+    fi
+  else
+    say "WARNING: npm not found - cannot install ecc-universal@$ECC_PINNED"
+  fi
+fi
+
+if [ -n "$SUPERPOWERS_TAG" ] && [ -n "$SUPERPOWERS_REPO" ]; then
+  SUPERPOWERS_DIR="$HOME/.cache/opencode/node_modules/superpowers"
+  mkdir -p "$(dirname "$SUPERPOWERS_DIR")"
+  if [ -d "$SUPERPOWERS_DIR/.git" ]; then
+    current_tag="$(git -C "$SUPERPOWERS_DIR" describe --tags --exact-match 2>/dev/null || true)"
+    if [ "$current_tag" = "$SUPERPOWERS_TAG" ]; then
+      say "superpowers: already at pinned tag $SUPERPOWERS_TAG"
+    else
+      say "superpowers: updating to $SUPERPOWERS_TAG (found: ${current_tag:-unknown})..."
+      git -C "$SUPERPOWERS_DIR" fetch --depth 1 origin "tag" "$SUPERPOWERS_TAG"
+      git -C "$SUPERPOWERS_DIR" checkout "$SUPERPOWERS_TAG"
+    fi
+  else
+    say "superpowers: cloning $SUPERPOWERS_TAG..."
+    rm -rf "$SUPERPOWERS_DIR"
+    git clone --depth 1 --branch "$SUPERPOWERS_TAG" "$SUPERPOWERS_REPO" "$SUPERPOWERS_DIR"
+  fi
+fi
+
+# --- 6. Done --------------------------------------------------------------------
 
 say "done. Open a new shell (or source your rc) and run: hypoc"
