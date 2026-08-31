@@ -1,0 +1,19 @@
+{
+  "_comment": "Single source of truth for external plugin dependencies hypoc's own installer (bin/install) provisions for the user. Mirrors bmxoc's versions.json pattern: pin known-good versions here, read from here in the installer, update in one place when bumping.",
+  "dependencies": {
+    "ecc-universal": {
+      "type": "npm",
+      "package": "ecc-universal",
+      "pinned": "2.2.0",
+      "installCommand": "npm install -g ecc-universal@2.2.0",
+      "notes": "Referenced in .opencode.json's plugin array and required by .opencode/plugins/skill-discovery.ts, which resolves its skills/ directory at runtime. Previously assumed pre-installed; no installer ever actually provisioned it."
+    },
+    "superpowers": {
+      "type": "git",
+      "repo": "https://github.com/obra/superpowers.git",
+      "pinnedTag": "v6.3.0",
+      "cacheDir": "$HOME/.cache/opencode/node_modules/superpowers",
+      "notes": "Referenced in .opencode.json's plugin array. Its .opencode/plugins/superpowers.js already exports a proper function-factory plugin (SuperpowersPlugin), but as a named export, not `export default`, and package.json also declares a separate pi.extensions entry point. Whether opencode's plugin-array loader (as opposed to opencode's .opencode/plugins/*.ts auto-discovery) still loads this on opencode >= 1.18 is an open upstream question, not something this installer can fix on its own. This installer's job is limited to making sure the package is actually present on disk at a pinned version instead of silently absent."
+    }
+  }
+}

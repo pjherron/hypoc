@@ -28,6 +28,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { createRequire } from "node:module";
+import { execFileSync } from "node:child_process";
 
 const require = createRequire(import.meta.url);
 
@@ -47,6 +48,19 @@ function resolveSkillsDir(pkgName) {
   } catch {
     // Not resolvable as a normal Node module from here - fall through to
     // known global-install locations below.
+  }
+
+  // Ask npm directly where it puts global packages (works with nvm, custom
+  // prefixes, corp installs) - exactly where `npm install -g` (used by
+  // bin/install) actually places the package, not just a guess.
+  try {
+    const globalRoot = execFileSync("npm", ["root", "-g"], { encoding: "utf-8" }).trim();
+    if (globalRoot) {
+      const candidate = join(globalRoot, pkgName, "skills");
+      if (existsSync(candidate)) return candidate;
+    }
+  } catch {
+    // npm not on PATH or the call failed - fall through to hardcoded guesses.
   }
 
   const candidates = [];
@@ -70,7 +84,6 @@ function resolveSkillsDir(pkgName) {
   }
   return null;
 }
-
 const ECC_SKILLS_DIR = resolveSkillsDir("ecc-universal");
 
 function skillPath(name) {
