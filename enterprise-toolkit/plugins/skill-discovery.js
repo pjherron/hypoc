@@ -2,237 +2,305 @@
  * Context-Aware Skill Discovery Plugin for OpenCode
  *
  * Analyzes project structure and user prompts to suggest relevant skills.
- * Does NOT auto-inject - only suggests via system messages.
+ * Does NOT auto-inject - only suggests via the system prompt.
  *
  * Features:
  * - Project type detection (React, Next.js, Python, Go, etc.)
  * - Keyword-based skill matching on user prompts
- * - Session memory of loaded skills (avoid re-suggesting)
+ * - Session memory of suggested skills (avoid re-suggesting)
  * - Token budget awareness
+ *
+ * Notes on the opencode plugin API (opencode >= 1.18):
+ * - export default must be a function factory: (ctx) => Promise<Hooks>,
+ *   not a plain object. See plugins/opencode-model-router/src/index.ts for the
+ *   reference implementation this plugin now matches.
+ * - There is no "session.created" / "message.user" / "skill.loaded" hook. The real
+ *   hook order is chat.message -> experimental.chat.system.transform -> chat.params.
+ *   User message text is only available in chat.message's `output`; system-prompt
+ *   injection only happens via output.system.push(...) inside
+ *   experimental.chat.system.transform.
+ *
+ * This is a hand-ported build of skill-discovery.ts, kept in sync manually
+ * because no TypeScript build step runs in this environment. If a real build
+ * pipeline is added, regenerate this file from the .ts source instead of
+ * editing it directly.
  */
-import { existsSync, readFileSync } from "fs";
-import { join } from "path";
+import { existsSync, readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+
+/**
+ * Resolve the installed location of a globally-fetched skill package.
+ *
+ * Tries Node's own module resolution first (works regardless of platform or
+ * package manager - npm on Windows, Homebrew on macOS/Linuxbrew, apt, etc.),
+ * then falls back to a short list of common global-install locations. Returns
+ * null (not a hardcoded guess) if the package genuinely isn't installed, so
+ * callers can skip those skills instead of pointing at a dead path.
+ */
+function resolveSkillsDir(pkgName) {
+  try {
+    const pkgJsonPath = require.resolve(`${pkgName}/package.json`);
+    return join(dirname(pkgJsonPath), "skills");
+  } catch {
+    // Not resolvable as a normal Node module from here - fall through to
+    // known global-install locations below.
+  }
+
+  const candidates = [];
+  if (process.platform === "darwin") {
+    candidates.push(
+      `/opt/homebrew/lib/node_modules/${pkgName}/skills`,
+      `/usr/local/lib/node_modules/${pkgName}/skills`,
+    );
+  } else if (process.platform === "linux") {
+    candidates.push(
+      `/home/linuxbrew/.linuxbrew/lib/node_modules/${pkgName}/skills`,
+      `/usr/lib/node_modules/${pkgName}/skills`,
+      `/usr/local/lib/node_modules/${pkgName}/skills`,
+    );
+  } else if (process.platform === "win32" && process.env.APPDATA) {
+    candidates.push(join(process.env.APPDATA, "npm", "node_modules", pkgName, "skills"));
+  }
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
+const ECC_SKILLS_DIR = resolveSkillsDir("ecc-universal");
+
+function skillPath(name) {
+  return ECC_SKILLS_DIR ? join(ECC_SKILLS_DIR, name, "SKILL.md") : null;
+}
+
 const SKILL_CATALOG = [
-    {
-        name: "frontend-patterns",
-        path: "/opt/homebrew/lib/node_modules/ecc-universal/skills/frontend-patterns/SKILL.md",
-        triggers: {
-            filePatterns: ["*.tsx", "*.jsx", "package.json"],
-            keywords: ["react", "component", "hook", "state", "render"],
-            dependencies: ["react", "next"]
-        },
-        category: "frontend",
-        estimatedTokens: 4500
+  {
+    name: "frontend-patterns",
+    path: skillPath("frontend-patterns"),
+    triggers: {
+      filePatterns: ["*.tsx", "*.jsx", "package.json"],
+      keywords: ["react", "component", "hook", "state", "render"],
+      dependencies: ["react", "next"]
     },
-    {
-        name: "backend-patterns",
-        path: "/opt/homebrew/lib/node_modules/ecc-universal/skills/backend-patterns/SKILL.md",
-        triggers: {
-            filePatterns: ["*/api/*", "*/routes/*", "*.service.ts"],
-            keywords: ["api", "endpoint", "database", "cache", "repository"],
-            dependencies: ["express", "fastify", "nestjs"]
-        },
-        category: "backend",
-        estimatedTokens: 4200
+    category: "frontend",
+    estimatedTokens: 4500
+  },
+  {
+    name: "backend-patterns",
+    path: skillPath("backend-patterns"),
+    triggers: {
+      filePatterns: ["*/api/*", "*/routes/*", "*.service.ts"],
+      keywords: ["api", "endpoint", "database", "cache", "repository"],
+      dependencies: ["express", "fastify", "nestjs"]
     },
-    {
-        name: "api-design",
-        path: "/opt/homebrew/lib/node_modules/ecc-universal/skills/api-design/SKILL.md",
-        triggers: {
-            keywords: ["rest", "graphql", "endpoint", "pagination", "rate limit"],
-            filePatterns: ["*/api/*", "openapi.yaml", "swagger.json"]
-        },
-        category: "backend",
-        estimatedTokens: 3800
+    category: "backend",
+    estimatedTokens: 4200
+  },
+  {
+    name: "api-design",
+    path: skillPath("api-design"),
+    triggers: {
+      keywords: ["rest", "graphql", "endpoint", "pagination", "rate limit"],
+      filePatterns: ["*/api/*", "openapi.yaml", "swagger.json"]
     },
-    {
-        name: "e2e-testing",
-        path: "/opt/homebrew/lib/node_modules/ecc-universal/skills/e2e-testing/SKILL.md",
-        triggers: {
-            keywords: ["e2e", "playwright", "selenium", "integration test", "user flow"],
-            filePatterns: ["playwright.config.*", "*/e2e/*", "*.spec.ts"]
-        },
-        category: "testing",
-        estimatedTokens: 3500
+    category: "backend",
+    estimatedTokens: 3800
+  },
+  {
+    name: "e2e-testing",
+    path: skillPath("e2e-testing"),
+    triggers: {
+      keywords: ["e2e", "playwright", "selenium", "integration test", "user flow"],
+      filePatterns: ["playwright.config.*", "*/e2e/*", "*.spec.ts"]
     },
-    {
-        name: "python-patterns",
-        path: "/opt/homebrew/lib/node_modules/ecc-universal/skills/python-patterns/SKILL.md",
-        triggers: {
-            filePatterns: ["*.py", "requirements.txt", "pyproject.toml"],
-            keywords: ["python", "pandas", "numpy", "fastapi"]
-        },
-        category: "backend",
-        estimatedTokens: 3200
+    category: "testing",
+    estimatedTokens: 3500
+  },
+  {
+    name: "python-patterns",
+    path: skillPath("python-patterns"),
+    triggers: {
+      filePatterns: ["*.py", "requirements.txt", "pyproject.toml"],
+      keywords: ["python", "pandas", "numpy", "fastapi"]
     },
-    {
-        name: "golang-patterns",
-        path: "/opt/homebrew/lib/node_modules/ecc-universal/skills/golang-patterns/SKILL.md",
-        triggers: {
-            filePatterns: ["*.go", "go.mod", "go.sum"],
-            keywords: ["golang", "goroutine", "channel", "interface"]
-        },
-        category: "backend",
-        estimatedTokens: 3400
+    category: "backend",
+    estimatedTokens: 3200
+  },
+  {
+    name: "golang-patterns",
+    path: skillPath("golang-patterns"),
+    triggers: {
+      filePatterns: ["*.go", "go.mod", "go.sum"],
+      keywords: ["golang", "goroutine", "channel", "interface"]
     },
-    {
-        name: "pytorch-patterns",
-        path: "/opt/homebrew/lib/node_modules/ecc-universal/skills/pytorch-patterns/SKILL.md",
-        triggers: {
-            keywords: ["pytorch", "tensor", "model", "training", "neural network"],
-            dependencies: ["torch", "pytorch"]
-        },
-        category: "research",
-        estimatedTokens: 4000
+    category: "backend",
+    estimatedTokens: 3400
+  },
+  {
+    name: "pytorch-patterns",
+    path: skillPath("pytorch-patterns"),
+    triggers: {
+      keywords: ["pytorch", "tensor", "model", "training", "neural network"],
+      dependencies: ["torch", "pytorch"]
     },
-    {
-        name: "docker-patterns",
-        path: "/opt/homebrew/lib/node_modules/ecc-universal/skills/docker-patterns/SKILL.md",
-        triggers: {
-            filePatterns: ["Dockerfile", "docker-compose.yml", ".dockerignore"],
-            keywords: ["docker", "container", "kubernetes", "deployment"]
-        },
-        category: "devops",
-        estimatedTokens: 2800
+    category: "research",
+    estimatedTokens: 4000
+  },
+  {
+    name: "docker-patterns",
+    path: skillPath("docker-patterns"),
+    triggers: {
+      filePatterns: ["Dockerfile", "docker-compose.yml", ".dockerignore"],
+      keywords: ["docker", "container", "kubernetes", "deployment"]
     },
-    {
-        name: "verification-loop",
-        path: "/opt/homebrew/lib/node_modules/ecc-universal/skills/verification-loop/SKILL.md",
-        triggers: {
-            keywords: ["verify", "build", "test", "lint", "quality gate"]
-        },
-        category: "testing",
-        estimatedTokens: 2500
+    category: "devops",
+    estimatedTokens: 2800
+  },
+  {
+    name: "verification-loop",
+    path: skillPath("verification-loop"),
+    triggers: {
+      keywords: ["verify", "build", "test", "lint", "quality gate"]
     },
-    {
-        name: "strategic-compact",
-        path: "/opt/homebrew/lib/node_modules/ecc-universal/skills/strategic-compact/SKILL.md",
-        triggers: {
-            keywords: ["context", "token", "compact", "memory"]
-        },
-        category: "research",
-        estimatedTokens: 2200
-    }
+    category: "testing",
+    estimatedTokens: 2500
+  },
+  {
+    name: "strategic-compact",
+    path: skillPath("strategic-compact"),
+    triggers: {
+      keywords: ["context", "token", "compact", "memory"]
+    },
+    category: "research",
+    estimatedTokens: 2200
+  }
 ];
-// Session state
-let loadedSkills = new Set();
-let projectContext = null;
-let tokenBudget = 200000; // Default OpenCode budget
+
+/** A skill is only suggestible if its package resolved AND the SKILL.md actually exists. */
+function isAvailable(skill) {
+  return !!skill.path && existsSync(skill.path);
+}
+
 /**
  * Detect project type from file structure
  */
-async function detectProjectContext(workdir) {
-    const frameworks = [];
-    let hasTests = false;
-    let hasDocker = false;
-    // Check package.json for Node.js projects
-    const packageJsonPath = join(workdir, "package.json");
-    if (existsSync(packageJsonPath)) {
-        try {
-            const pkg = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
-            const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-            if (deps.react)
-                frameworks.push("react");
-            if (deps.next)
-                frameworks.push("next");
-            if (deps.express)
-                frameworks.push("express");
-            if (deps.fastify)
-                frameworks.push("fastify");
-            if (deps["@nestjs/core"])
-                frameworks.push("nestjs");
-            if (deps.playwright || deps["@playwright/test"])
-                hasTests = true;
-        }
-        catch { }
-    }
-    // Check for Python
-    if (existsSync(join(workdir, "requirements.txt")) || existsSync(join(workdir, "pyproject.toml"))) {
-        frameworks.push("python");
-    }
-    // Check for Go
-    if (existsSync(join(workdir, "go.mod"))) {
-        frameworks.push("golang");
-    }
-    // Check for Docker
-    if (existsSync(join(workdir, "Dockerfile"))) {
-        hasDocker = true;
-    }
-    // Check for test directories
-    if (existsSync(join(workdir, "tests")) || existsSync(join(workdir, "test"))) {
-        hasTests = true;
-    }
-    // Determine project type
-    let type = "mixed";
-    if (frameworks.includes("react") || frameworks.includes("next")) {
-        type = "web-fullstack";
-    }
-    else if (frameworks.includes("python")) {
-        type = "python-ml";
-    }
-    else if (frameworks.includes("golang")) {
-        type = "golang-service";
-    }
-    else if (frameworks.includes("express") || frameworks.includes("fastify")) {
-        type = "backend-api";
-    }
-    return { type, frameworks, hasTests, hasDocker };
+function detectProjectContext(workdir) {
+  const frameworks = [];
+  let hasTests = false;
+  let hasDocker = false;
+
+  const packageJsonPath = join(workdir, "package.json");
+  if (existsSync(packageJsonPath)) {
+    try {
+      const pkg = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+      const deps = { ...pkg.dependencies, ...pkg.devDependencies };
+
+      if (deps.react) frameworks.push("react");
+      if (deps.next) frameworks.push("next");
+      if (deps.express) frameworks.push("express");
+      if (deps.fastify) frameworks.push("fastify");
+      if (deps["@nestjs/core"]) frameworks.push("nestjs");
+      if (deps.playwright || deps["@playwright/test"]) hasTests = true;
+    } catch {}
+  }
+
+  if (existsSync(join(workdir, "requirements.txt")) || existsSync(join(workdir, "pyproject.toml"))) {
+    frameworks.push("python");
+  }
+
+  if (existsSync(join(workdir, "go.mod"))) {
+    frameworks.push("golang");
+  }
+
+  if (existsSync(join(workdir, "Dockerfile"))) {
+    hasDocker = true;
+  }
+
+  if (existsSync(join(workdir, "tests")) || existsSync(join(workdir, "test"))) {
+    hasTests = true;
+  }
+
+  let type = "mixed";
+  if (frameworks.includes("react") || frameworks.includes("next")) {
+    type = "web-fullstack";
+  } else if (frameworks.includes("python")) {
+    type = "python-ml";
+  } else if (frameworks.includes("golang")) {
+    type = "golang-service";
+  } else if (frameworks.includes("express") || frameworks.includes("fastify")) {
+    type = "backend-api";
+  }
+
+  return { type, frameworks, hasTests, hasDocker };
 }
+
 /**
  * Match skills based on user prompt keywords
  */
-function matchSkillsByKeywords(prompt) {
-    const lowercasePrompt = prompt.toLowerCase();
-    const matches = [];
-    for (const skill of SKILL_CATALOG) {
-        if (loadedSkills.has(skill.name))
-            continue; // Skip already loaded
-        if (skill.triggers.keywords) {
-            for (const keyword of skill.triggers.keywords) {
-                if (lowercasePrompt.includes(keyword.toLowerCase())) {
-                    matches.push(skill);
-                    break;
-                }
-            }
+function matchSkillsByKeywords(prompt, alreadySuggested) {
+  const lowercasePrompt = prompt.toLowerCase();
+  const matches = [];
+
+  for (const skill of SKILL_CATALOG) {
+    if (alreadySuggested.has(skill.name) || !isAvailable(skill)) continue;
+
+    if (skill.triggers.keywords) {
+      for (const keyword of skill.triggers.keywords) {
+        if (lowercasePrompt.includes(keyword.toLowerCase())) {
+          matches.push(skill);
+          break;
         }
+      }
     }
-    return matches;
+  }
+
+  return matches;
 }
+
 /**
  * Match skills based on project context
  */
-function matchSkillsByProject(context) {
-    const matches = [];
-    for (const skill of SKILL_CATALOG) {
-        if (loadedSkills.has(skill.name))
-            continue;
-        // Match by framework
-        if (skill.triggers.dependencies) {
-            for (const dep of skill.triggers.dependencies) {
-                if (context.frameworks.includes(dep)) {
-                    matches.push(skill);
-                    break;
-                }
-            }
+function matchSkillsByProject(context, alreadySuggested) {
+  const matches = [];
+
+  for (const skill of SKILL_CATALOG) {
+    if (alreadySuggested.has(skill.name) || !isAvailable(skill)) continue;
+
+    if (skill.triggers.dependencies) {
+      for (const dep of skill.triggers.dependencies) {
+        if (context.frameworks.includes(dep)) {
+          matches.push(skill);
+          break;
         }
+      }
     }
-    return matches;
+  }
+
+  return matches;
 }
+
 /**
  * Generate suggestion message
  */
-function generateSuggestion(skills) {
-    if (skills.length === 0)
-        return "";
-    const totalTokens = skills.reduce((sum, s) => sum + s.estimatedTokens, 0);
-    const remaining = tokenBudget - 80000; // Assume 80K baseline usage
-    if (totalTokens > remaining) {
-        skills = skills.slice(0, Math.floor(remaining / 4000));
-    }
-    if (skills.length === 0)
-        return "";
-    const skillList = skills.map(s => `- ${s.name} (~${s.estimatedTokens} tokens)`).join("\n");
-    return `
+function generateSuggestion(skills, tokenBudget) {
+  if (skills.length === 0) return "";
+
+  const totalTokens = skills.reduce((sum, s) => sum + s.estimatedTokens, 0);
+  const remaining = tokenBudget - 80000;
+
+  if (totalTokens > remaining) {
+    skills = skills.slice(0, Math.max(0, Math.floor(remaining / 4000)));
+  }
+
+  if (skills.length === 0) return "";
+
+  const skillList = skills.map(s => `- ${s.name} (~${s.estimatedTokens} tokens)`).join("\n");
+
+  return `
 [SKILL DISCOVERY]
 Detected relevant skills for this context:
 
@@ -245,45 +313,82 @@ To load a skill:
 Token impact: ~${totalTokens.toLocaleString()} tokens total
 `.trim();
 }
+
+const TOKEN_BUDGET = 200000; // Default OpenCode budget
+
 /**
- * Plugin hooks
+ * Plugin factory - opencode >= 1.18 requires export default to be a function
+ * that returns hooks, not a plain object of hooks.
  */
-export const skillDiscovery = {
-    // Detect project context when session starts
-    "session.created": async (context) => {
-        const workdir = context?.workdir;
-        projectContext = await detectProjectContext(workdir || process.cwd());
-        console.log(`[Skill Discovery] Detected project: ${projectContext.type}`);
-        console.log(`[Skill Discovery] Frameworks: ${projectContext.frameworks.join(", ")}`);
-        // Suggest initial skills based on project
-        const suggestions = matchSkillsByProject(projectContext);
-        if (suggestions.length > 0) {
-            return {
-                metadata: {
-                    suggestions: generateSuggestion(suggestions.slice(0, 3))
-                }
-            };
-        }
-    },
-    // Analyze user prompt for skill keywords
-    "message.user": async (context) => {
-        const content = context?.content;
-        if (!content || typeof content !== "string")
-            return;
-        const suggestions = matchSkillsByKeywords(content);
-        if (suggestions.length > 0) {
-            return {
-                metadata: {
-                    suggestions: generateSuggestion(suggestions.slice(0, 2))
-                }
-            };
-        }
-    },
-    // Track when skills are loaded (via skill tool or instructions)
-    "skill.loaded": async (context) => {
-        const skill = context?.skill;
-        loadedSkills.add(skill);
-        console.log(`[Skill Discovery] Loaded: ${skill}`);
+const SkillDiscoveryPlugin = async (ctx) => {
+  const workdir = ctx.directory ?? process.cwd();
+  const projectContext = detectProjectContext(workdir);
+
+  const lastUserText = new Map();
+  const suggestedThisSession = new Map();
+  const projectSuggestedFor = new Set();
+
+  function suggestedSetFor(sessionID) {
+    let set = suggestedThisSession.get(sessionID);
+    if (!set) {
+      set = new Set();
+      suggestedThisSession.set(sessionID, set);
     }
+    return set;
+  }
+
+  return {
+    "chat.message": async (input, output) => {
+      const sessionID = input?.sessionID;
+      if (!sessionID) return;
+      const parts = output?.parts ?? [];
+      const chunks = [];
+      for (const p of parts) {
+        if (typeof p === "string") chunks.push(p);
+        else if (p && typeof p === "object") {
+          if (typeof p.text === "string") chunks.push(p.text);
+          else if (typeof p.content === "string") chunks.push(p.content);
+        }
+      }
+      if (chunks.length === 0) {
+        const content = output?.message?.content;
+        if (typeof content === "string") chunks.push(content);
+      }
+      if (chunks.length > 0) lastUserText.set(sessionID, chunks.join("\n"));
+    },
+
+    "experimental.chat.system.transform": async (input, output) => {
+      try {
+        const sessionID = input?.sessionID;
+        const suggested = sessionID ? suggestedSetFor(sessionID) : new Set();
+        const messages = [];
+
+        if (!projectSuggestedFor.has(sessionID ?? "")) {
+          if (sessionID) projectSuggestedFor.add(sessionID);
+          const projectMatches = matchSkillsByProject(projectContext, suggested).slice(0, 3);
+          if (projectMatches.length > 0) {
+            messages.push(generateSuggestion(projectMatches, TOKEN_BUDGET));
+            for (const s of projectMatches) suggested.add(s.name);
+          }
+        }
+
+        const text = sessionID ? lastUserText.get(sessionID) : undefined;
+        if (text) {
+          const keywordMatches = matchSkillsByKeywords(text, suggested).slice(0, 2);
+          if (keywordMatches.length > 0) {
+            messages.push(generateSuggestion(keywordMatches, TOKEN_BUDGET));
+            for (const s of keywordMatches) suggested.add(s.name);
+          }
+        }
+
+        if (messages.length > 0) {
+          output.system.push(messages.join("\n\n"));
+        }
+      } catch {
+        // best-effort: a skill suggestion must never crash a real session
+      }
+    },
+  };
 };
-export default skillDiscovery;
+
+export default SkillDiscoveryPlugin;
