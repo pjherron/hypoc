@@ -8,8 +8,28 @@
 
 set -euo pipefail
 
-# Find the hypoc repo root (where this script lives, two levels up)
-HYPOC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Find the hypoc repo root (where this script lives, two levels up).
+# Resolves symlinks first: when invoked via a symlink (e.g. ~/.local/bin/hypoc
+# -> $HYPOC_DIR/bin/hypoc, which is exactly how bin/install sets it up),
+# ${BASH_SOURCE[0]} is the symlink's own path, not the real script location.
+# Without resolving it first, dirname/.. computes the wrong root entirely
+# (e.g. ~/.local instead of the real hypoc checkout), and every command that
+# depends on HYPOC_DIR (loading .opencode/opencode.json, the model-router
+# commands, .swarm/qdrant) silently breaks.
+resolve_script_path() {
+  local src="$1"
+  while [ -L "$src" ]; do
+    local dir
+    dir="$(cd "$(dirname "$src")" && pwd)"
+    src="$(readlink "$src")"
+    case "$src" in
+      /*) ;;
+      *) src="$dir/$src" ;;
+    esac
+  done
+  echo "$src"
+}
+HYPOC_DIR="$(cd "$(dirname "$(resolve_script_path "${BASH_SOURCE[0]}")")/.." && pwd)"
 
 wait_ready() {
   local url="$1" name="$2"
